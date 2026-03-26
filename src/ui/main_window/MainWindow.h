@@ -5,6 +5,7 @@
 #include <QPushButton>
 
 class SettingsPage;
+class DeviceOverviewPage;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -26,6 +27,7 @@ private:
     QPushButton* m_btnDataQuery = nullptr;
     QPushButton* m_btnSettings = nullptr;
 
+    DeviceOverviewPage* m_overviewPage = nullptr;
     SettingsPage* m_settingsPage = nullptr;
 
     int m_pageOverview = 0;

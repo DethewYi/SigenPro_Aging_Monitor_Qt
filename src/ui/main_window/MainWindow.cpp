@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ui/settings/SettingsPage.h"
+#include "ui/device_overview/DeviceOverviewPage.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -111,8 +112,12 @@ void MainWindow::setupContentArea()
 {
     m_contentStack = new QStackedWidget(this);
 
-    // Page 0-2: placeholders
-    for (int i = 0; i < 3; ++i) {
+    // Page 0: DeviceOverviewPage (real page)
+    m_overviewPage = new DeviceOverviewPage(m_contentStack);
+    m_contentStack->addWidget(m_overviewPage);
+
+    // Page 1-2: placeholders
+    for (int i = 1; i <= 2; ++i) {
         QLabel* placeholder = new QLabel(m_contentStack);
         placeholder->setAlignment(Qt::AlignCenter);
         QFont font;
@@ -121,11 +126,10 @@ void MainWindow::setupContentArea()
         m_contentStack->addWidget(placeholder);
     }
 
-    static_cast<QLabel*>(m_contentStack->widget(m_pageOverview))->setText(tr("Device Overview"));
     static_cast<QLabel*>(m_contentStack->widget(m_pageAlarm))->setText(tr("Alarm Panel"));
     static_cast<QLabel*>(m_contentStack->widget(m_pageDataQuery))->setText(tr("Data Query"));
 
-    // Page 3: real SettingsPage (replaces placeholder)
+    // Page 3: real SettingsPage
     m_settingsPage = new SettingsPage(m_contentStack);
     m_contentStack->addWidget(m_settingsPage);
 }

@@ -5,6 +5,9 @@ set(SOURCES
     app/LanguageManager.cpp
     ui/main_window/MainWindow.cpp
     ui/settings/SettingsPage.cpp
+    ui/device_overview/StatsBarWidget.cpp
+    ui/device_overview/DeviceCardWidget.cpp
+    ui/device_overview/DeviceOverviewPage.cpp
     storage/local_db/LocalDatabase.cpp
     storage/remote_db/RemoteDatabase.cpp
     storage/sync/DataSyncManager.cpp
@@ -28,6 +31,9 @@ set(HEADERS
     app/LanguageManager.h
     ui/main_window/MainWindow.h
     ui/settings/SettingsPage.h
+    ui/device_overview/StatsBarWidget.h
+    ui/device_overview/DeviceCardWidget.h
+    ui/device_overview/DeviceOverviewPage.h
     storage/local_db/LocalDatabase.h
     storage/remote_db/RemoteDatabase.h
     storage/sync/DataSyncManager.h
