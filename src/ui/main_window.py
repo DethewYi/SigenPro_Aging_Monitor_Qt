@@ -51,8 +51,8 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self._setup_side_nav()
         self._setup_content_area()
+        self._setup_side_nav()
 
         layout.addWidget(self._side_nav)
         layout.addWidget(self._content_stack)

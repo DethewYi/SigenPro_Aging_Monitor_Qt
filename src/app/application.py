@@ -113,7 +113,10 @@ class Application(QApplication):
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
             "plugins",
         )
-        PluginManager.instance().load_plugins(plugin_dir)
+        if not os.path.isdir(plugin_dir):
+            os.makedirs(plugin_dir, exist_ok=True)
+        self._plugin_manager = PluginManager()
+        self._plugin_manager.load_plugins(plugin_dir)
 
     def _initialize_business_logic(self):
         from ..core.alarm_engine import AlarmEngine
@@ -153,20 +156,16 @@ class Application(QApplication):
     def _initialize_main_window(self):
         from ..ui.main_window import MainWindow
         from ..ui.device_overview import DeviceOverviewPage
-        from ..ui.settings_page import SettingsPage
         from ..core.data_bus import DataBus
 
         self._main_window = MainWindow()
 
-        # Replace placeholder pages with real widgets
+        # Replace the Device Overview placeholder
         self._device_overview_page = DeviceOverviewPage()
         self._device_overview_page.device_clicked.connect(
             self._main_window.show_device_detail)
         self._main_window.set_page(
             MainWindow.PAGE_DEVICE_OVERVIEW, self._device_overview_page)
-
-        settings_page = SettingsPage()
-        self._main_window.set_page(MainWindow.PAGE_SETTINGS, settings_page)
 
         # Wire barcode -> status bar
         self._barcode_scanner.barcode_scanned.connect(self._on_barcode_scanned)
