@@ -4,6 +4,7 @@ set(SOURCES
     app/ThemeManager.cpp
     app/LanguageManager.cpp
     ui/main_window/MainWindow.cpp
+    ui/settings/SettingsPage.cpp
 )
 
 set(HEADERS
@@ -11,6 +12,7 @@ set(HEADERS
     app/ThemeManager.h
     app/LanguageManager.h
     ui/main_window/MainWindow.h
+    ui/settings/SettingsPage.h
 )
 
 set(RESOURCES

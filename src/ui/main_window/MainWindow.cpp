@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ui/settings/SettingsPage.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -110,7 +111,8 @@ void MainWindow::setupContentArea()
 {
     m_contentStack = new QStackedWidget(this);
 
-    for (int i = 0; i < 4; ++i) {
+    // Page 0-2: placeholders
+    for (int i = 0; i < 3; ++i) {
         QLabel* placeholder = new QLabel(m_contentStack);
         placeholder->setAlignment(Qt::AlignCenter);
         QFont font;
@@ -122,5 +124,8 @@ void MainWindow::setupContentArea()
     static_cast<QLabel*>(m_contentStack->widget(m_pageOverview))->setText(tr("Device Overview"));
     static_cast<QLabel*>(m_contentStack->widget(m_pageAlarm))->setText(tr("Alarm Panel"));
     static_cast<QLabel*>(m_contentStack->widget(m_pageDataQuery))->setText(tr("Data Query"));
-    static_cast<QLabel*>(m_contentStack->widget(m_pageSettings))->setText(tr("Settings"));
+
+    // Page 3: real SettingsPage (replaces placeholder)
+    m_settingsPage = new SettingsPage(m_contentStack);
+    m_contentStack->addWidget(m_settingsPage);
 }
