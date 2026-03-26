@@ -2,6 +2,8 @@
 #include "ui/settings/SettingsPage.h"
 #include "ui/device_overview/DeviceOverviewPage.h"
 #include "ui/device_detail/DeviceDetailPage.h"
+#include "ui/alarm_panel/AlarmPanelPage.h"
+#include "ui/data_query/DataQueryPage.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -109,18 +111,13 @@ void MainWindow::setupContentArea()
     m_overviewPage = new DeviceOverviewPage(m_contentStack);
     m_contentStack->addWidget(m_overviewPage);
 
-    // Page 1-2: placeholders
-    for (int i = 1; i <= 2; ++i) {
-        QLabel* placeholder = new QLabel(m_contentStack);
-        placeholder->setAlignment(Qt::AlignCenter);
-        QFont font;
-        font.setPointSize(16);
-        placeholder->setFont(font);
-        m_contentStack->addWidget(placeholder);
-    }
+    // Page 1: AlarmPanelPage
+    m_alarmPage = new AlarmPanelPage(m_contentStack);
+    m_contentStack->addWidget(m_alarmPage);
 
-    static_cast<QLabel*>(m_contentStack->widget(m_pageAlarm))->setText(tr("Alarm Panel"));
-    static_cast<QLabel*>(m_contentStack->widget(m_pageDataQuery))->setText(tr("Data Query"));
+    // Page 2: DataQueryPage
+    m_dataQueryPage = new DataQueryPage(m_contentStack);
+    m_contentStack->addWidget(m_dataQueryPage);
 
     // Page 3: real SettingsPage
     m_settingsPage = new SettingsPage(m_contentStack);
@@ -137,6 +134,14 @@ void MainWindow::setupContentArea()
     // Connect detail page back signal
     connect(m_detailPage, &DeviceDetailPage::backRequested,
             this, &MainWindow::onDetailBackRequested);
+
+    // Connect alarm page device click signal
+    connect(m_alarmPage, &AlarmPanelPage::deviceAlarmClicked,
+            this, &MainWindow::showDeviceDetail);
+
+    // Connect data query page navigation signal
+    connect(m_dataQueryPage, &DataQueryPage::navigateToDeviceDetail,
+            this, &MainWindow::showDeviceDetail);
 }
 
 void MainWindow::showDeviceDetail(int deviceId)

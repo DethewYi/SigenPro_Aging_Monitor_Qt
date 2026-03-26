@@ -7,6 +7,8 @@
 class SettingsPage;
 class DeviceOverviewPage;
 class DeviceDetailPage;
+class AlarmPanelPage;
+class DataQueryPage;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -32,6 +34,8 @@ private:
     QPushButton* m_btnSettings = nullptr;
 
     DeviceOverviewPage* m_overviewPage = nullptr;
+    AlarmPanelPage* m_alarmPage = nullptr;
+    DataQueryPage* m_dataQueryPage = nullptr;
     SettingsPage* m_settingsPage = nullptr;
     DeviceDetailPage* m_detailPage = nullptr;
 

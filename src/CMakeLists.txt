@@ -12,6 +12,8 @@ set(SOURCES
     ui/device_detail/RealtimeDataPanel.cpp
     ui/device_detail/TestControlPanel.cpp
     ui/device_detail/DeviceDetailPage.cpp
+    ui/alarm_panel/AlarmPanelPage.cpp
+    ui/data_query/DataQueryPage.cpp
     storage/local_db/LocalDatabase.cpp
     storage/remote_db/RemoteDatabase.cpp
     storage/sync/DataSyncManager.cpp
@@ -42,6 +44,8 @@ set(HEADERS
     ui/device_detail/RealtimeDataPanel.h
     ui/device_detail/TestControlPanel.h
     ui/device_detail/DeviceDetailPage.h
+    ui/alarm_panel/AlarmPanelPage.h
+    ui/data_query/DataQueryPage.h
     storage/local_db/LocalDatabase.h
     storage/remote_db/RemoteDatabase.h
     storage/sync/DataSyncManager.h
