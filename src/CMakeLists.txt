@@ -18,6 +18,8 @@ set(SOURCES
     core/alarm_engine/AlarmEngine.cpp
     core/template_manager/TemplateManager.cpp
     core/test_engine/TestEngine.cpp
+    instrument/channel_manager/ChannelManager.cpp
+    instrument/scanner/BarcodeScanner.cpp
 )
 
 set(HEADERS
@@ -41,6 +43,8 @@ set(HEADERS
     core/alarm_engine/AlarmEngine.h
     core/template_manager/TemplateManager.h
     core/test_engine/TestEngine.h
+    instrument/channel_manager/ChannelManager.h
+    instrument/scanner/BarcodeScanner.h
 )
 
 set(RESOURCES
