@@ -5,6 +5,8 @@ set(SOURCES
     app/LanguageManager.cpp
     ui/main_window/MainWindow.cpp
     ui/settings/SettingsPage.cpp
+    storage/local_db/LocalDatabase.cpp
+    storage/DatabaseManager.cpp
 )
 
 set(HEADERS
@@ -13,6 +15,8 @@ set(HEADERS
     app/LanguageManager.h
     ui/main_window/MainWindow.h
     ui/settings/SettingsPage.h
+    storage/local_db/LocalDatabase.h
+    storage/DatabaseManager.h
 )
 
 set(RESOURCES
