@@ -1,15 +1,21 @@
 set(SOURCES
     main.cpp
     app/Application.cpp
+    app/ThemeManager.cpp
     ui/main_window/MainWindow.cpp
 )
 
 set(HEADERS
     app/Application.h
+    app/ThemeManager.h
     ui/main_window/MainWindow.h
 )
 
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
+set(RESOURCES
+    ../resources/resources.qrc
+)
+
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS} ${RESOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
