@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "app/ThemeManager.h"
 #include "app/LanguageManager.h"
+#include "app/Logger.h"
 #include <QSettings>
 
 Application::Application(int& argc, char* argv[])
@@ -9,6 +10,11 @@ Application::Application(int& argc, char* argv[])
     setApplicationName("SigenPro Aging Monitor");
     setApplicationVersion("1.0.0");
     setOrganizationName("SigenPro");
+
+    // Initialize logging system
+    Logger::instance().setLogDir(QCoreApplication::applicationDirPath() + "/logs");
+    qInstallMessageHandler(Logger::messageHandler);
+    Logger::instance().info(tr("Application starting"));
 
     m_mainWindow = new MainWindow();
     m_mainWindow->show();

@@ -3,6 +3,9 @@ set(SOURCES
     app/Application.cpp
     app/ThemeManager.cpp
     app/LanguageManager.cpp
+    app/Logger.cpp
+    report/PdfReportGenerator.cpp
+    report/ExcelReportGenerator.cpp
     ui/main_window/MainWindow.cpp
     ui/settings/SettingsPage.cpp
     ui/device_overview/StatsBarWidget.cpp
@@ -37,6 +40,9 @@ set(HEADERS
     app/Application.h
     app/ThemeManager.h
     app/LanguageManager.h
+    app/Logger.h
+    report/PdfReportGenerator.h
+    report/ExcelReportGenerator.h
     ui/main_window/MainWindow.h
     ui/settings/SettingsPage.h
     ui/device_overview/StatsBarWidget.h
