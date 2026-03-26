@@ -12,6 +12,9 @@ set(SOURCES
     protocol/plugin_loader/PluginManager.cpp
     communication/tcp/TcpDeviceConnection.cpp
     communication/tcp/TcpConnectionManager.cpp
+    communication/can/CanBridge.cpp
+    communication/rs485/Rs485Bridge.cpp
+    core/data_bus/DataBus.cpp
 )
 
 set(HEADERS
@@ -29,6 +32,9 @@ set(HEADERS
     protocol/plugin_loader/PluginManager.h
     communication/tcp/TcpDeviceConnection.h
     communication/tcp/TcpConnectionManager.h
+    communication/can/CanBridge.h
+    communication/rs485/Rs485Bridge.h
+    core/data_bus/DataBus.h
 )
 
 set(RESOURCES
