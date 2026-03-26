@@ -1,4 +1,6 @@
 #include "DatabaseManager.h"
+#include "storage/sync/DataSyncManager.h"
+
 #include <QSettings>
 #include <QCoreApplication>
 
@@ -10,7 +12,11 @@ DatabaseManager& DatabaseManager::instance()
 
 DatabaseManager::DatabaseManager(QObject* parent)
     : QObject(parent)
+    , m_syncManager(new DataSyncManager(this))
 {
+    // Wire the sync manager to the databases
+    m_syncManager->m_localDb = &m_localDb;
+    m_syncManager->m_remoteDb = &m_remoteDb;
 }
 
 bool DatabaseManager::initialize()
@@ -27,4 +33,28 @@ bool DatabaseManager::initialize()
 LocalDatabase* DatabaseManager::localDb()
 {
     return &m_localDb;
+}
+
+RemoteDatabase* DatabaseManager::remoteDb()
+{
+    return &m_remoteDb;
+}
+
+DataSyncManager* DatabaseManager::syncManager()
+{
+    return m_syncManager;
+}
+
+void DatabaseManager::startSync()
+{
+    if (m_syncManager) {
+        m_syncManager->start();
+    }
+}
+
+void DatabaseManager::stopSync()
+{
+    if (m_syncManager) {
+        m_syncManager->stop();
+    }
 }
