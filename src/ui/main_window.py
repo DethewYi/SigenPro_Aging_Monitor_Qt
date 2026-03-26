@@ -20,10 +20,11 @@ class MainWindow(QMainWindow):
 
     # Page indices — used as stable constants throughout the application
     PAGE_DEVICE_OVERVIEW = 0
-    PAGE_ALARMS = 1
-    PAGE_DATA_QUERY = 2
-    PAGE_TEMPLATE_MGMT = 3
-    PAGE_SETTINGS = 4
+    PAGE_DEVICE_DETAIL = 1
+    PAGE_ALARMS = 2
+    PAGE_DATA_QUERY = 3
+    PAGE_TEMPLATE_MGMT = 4
+    PAGE_SETTINGS = 5
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -32,9 +33,13 @@ class MainWindow(QMainWindow):
 
         self._nav_buttons: dict[int, QPushButton] = {}
         self._button_group: QButtonGroup | None = None
+        self._device_detail_page = None
+        self._alarm_panel_page = None
+        self._data_query_page = None
 
         self._setup_ui()
         self._setup_menu_bar()
+        self._setup_detail_pages()
 
     # ------------------------------------------------------------------
     # UI construction
@@ -156,11 +161,12 @@ class MainWindow(QMainWindow):
 
         # Placeholder pages — each will be replaced with a real widget later
         placeholder_labels = [
-            self.tr("Device Overview"),
-            self.tr("Alarm Panel"),
-            self.tr("Data Query"),
-            self.tr("Template Management"),
-            self.tr("Settings"),
+            self.tr("Device Overview"),   # PAGE_DEVICE_OVERVIEW
+            self.tr("Device Detail"),     # PAGE_DEVICE_DETAIL
+            self.tr("Alarm Panel"),       # PAGE_ALARMS
+            self.tr("Data Query"),        # PAGE_DATA_QUERY
+            self.tr("Template Management"),  # PAGE_TEMPLATE_MGMT
+            self.tr("Settings"),          # PAGE_SETTINGS
         ]
         for text in placeholder_labels:
             label = QLabel(text)
@@ -188,3 +194,68 @@ class MainWindow(QMainWindow):
     def navigate_to(self, page_index: int):
         """Programmatically navigate to a given page."""
         self._content_stack.setCurrentIndex(page_index)
+
+    # ------------------------------------------------------------------
+    # Detail page wiring
+    # ------------------------------------------------------------------
+
+    @property
+    def device_detail_page(self):
+        """Return the DeviceDetailPage instance (created in _setup_detail_pages)."""
+        return self._device_detail_page
+
+    @property
+    def alarm_panel_page(self):
+        """Return the AlarmPanelPage instance (created in _setup_detail_pages)."""
+        return self._alarm_panel_page
+
+    @property
+    def data_query_page(self):
+        """Return the DataQueryPage instance (created in _setup_detail_pages)."""
+        return self._data_query_page
+
+    def _setup_detail_pages(self):
+        """Instantiate and wire the device detail, alarm, and data query pages."""
+        from .device_detail import DeviceDetailPage
+        from .alarm_panel import AlarmPanelPage
+        from .data_query import DataQueryPage
+
+        # --- Device Detail page (PAGE_DEVICE_DETAIL = 1) ---
+        self._device_detail_page = DeviceDetailPage()
+        self.set_page(self.PAGE_DEVICE_DETAIL, self._device_detail_page)
+
+        # --- Alarm Panel page (PAGE_ALARMS = 2) ---
+        self._alarm_panel_page = AlarmPanelPage()
+        self.set_page(self.PAGE_ALARMS, self._alarm_panel_page)
+
+        # --- Data Query page (PAGE_DATA_QUERY = 3) ---
+        self._data_query_page = DataQueryPage()
+        self.set_page(self.PAGE_DATA_QUERY, self._data_query_page)
+
+        # --- Wire cross-page navigation ---
+
+        # Device Overview -> Device Detail
+        # This signal is emitted by DeviceOverviewPage; we connect it here
+        # so that when application.py replaces the overview placeholder,
+        # it can re-connect device_clicked -> _show_device_detail.
+        # The handler is a method so it can be called by the app layer too.
+        self._device_detail_page.back_requested.connect(
+            lambda: self.navigate_to(self.PAGE_DEVICE_OVERVIEW)
+        )
+
+        # Alarm panel -> Device Detail (double-click on alarm row)
+        self._alarm_panel_page.device_alarm_clicked.connect(self._show_device_detail)
+
+        # Data Query -> Device Detail (double-click on record row)
+        self._data_query_page.navigate_to_device_detail.connect(self._show_device_detail)
+
+    def show_device_detail(self, device_id: int):
+        """Public helper: navigate to the device detail page for *device_id*."""
+        self._show_device_detail(device_id)
+
+    def _show_device_detail(self, device_id: int):
+        """Activate the device detail page and set the device context."""
+        if self._device_detail_page is None:
+            return
+        self._device_detail_page.set_device(device_id)
+        self.navigate_to(self.PAGE_DEVICE_DETAIL)

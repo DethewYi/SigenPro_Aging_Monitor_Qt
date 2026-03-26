@@ -68,6 +68,7 @@ class Application(QApplication):
 
         # Replace placeholder pages with real widgets
         device_overview = DeviceOverviewPage()
+        device_overview.device_clicked.connect(self._main_window.show_device_detail)
         self._main_window.set_page(MainWindow.PAGE_DEVICE_OVERVIEW, device_overview)
 
         settings_page = SettingsPage()
