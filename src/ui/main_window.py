@@ -215,10 +215,11 @@ class MainWindow(QMainWindow):
         return self._data_query_page
 
     def _setup_detail_pages(self):
-        """Instantiate and wire the device detail, alarm, and data query pages."""
+        """Instantiate and wire the device detail, alarm, data query, and template pages."""
         from .device_detail import DeviceDetailPage
         from .alarm_panel import AlarmPanelPage
         from .data_query import DataQueryPage
+        from .template_config import TemplateConfigPage
 
         # --- Device Detail page (PAGE_DEVICE_DETAIL = 1) ---
         self._device_detail_page = DeviceDetailPage()
@@ -231,6 +232,10 @@ class MainWindow(QMainWindow):
         # --- Data Query page (PAGE_DATA_QUERY = 3) ---
         self._data_query_page = DataQueryPage()
         self.set_page(self.PAGE_DATA_QUERY, self._data_query_page)
+
+        # --- Template Management page (PAGE_TEMPLATE_MGMT = 4) ---
+        self._template_config_page = TemplateConfigPage()
+        self.set_page(self.PAGE_TEMPLATE_MGMT, self._template_config_page)
 
         # --- Wire cross-page navigation ---
 
