@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "app/ThemeManager.h"
+#include "app/LanguageManager.h"
 #include <QSettings>
 
 Application::Application(int& argc, char* argv[])
@@ -15,6 +16,9 @@ Application::Application(int& argc, char* argv[])
     QSettings settings;
     int savedTheme = settings.value("theme", 0).toInt();
     ThemeManager::instance().applyTheme(static_cast<ThemeManager::Theme>(savedTheme));
+
+    QString savedLang = settings.value("language", "zh_CN").toString();
+    LanguageManager::instance().switchLanguage(savedLang);
 }
 
 Application::~Application()

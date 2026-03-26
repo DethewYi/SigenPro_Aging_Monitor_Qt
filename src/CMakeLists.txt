@@ -2,12 +2,14 @@ set(SOURCES
     main.cpp
     app/Application.cpp
     app/ThemeManager.cpp
+    app/LanguageManager.cpp
     ui/main_window/MainWindow.cpp
 )
 
 set(HEADERS
     app/Application.h
     app/ThemeManager.h
+    app/LanguageManager.h
     ui/main_window/MainWindow.h
 )
 

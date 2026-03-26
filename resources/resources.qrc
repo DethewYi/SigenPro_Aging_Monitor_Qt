@@ -5,4 +5,11 @@
         <file>themes/industrial.qss</file>
         <file>themes/highcontrast.qss</file>
     </qresource>
+    <!-- i18n: .qm files will be added here after running lrelease on .ts files in src/i18n/ -->
+    <!-- lrelease src/i18n/SigenPro_zh_CN.ts -qm resources/i18n/SigenPro_zh_CN.qm -->
+    <!-- lrelease src/i18n/SigenPro_en_US.ts -qm resources/i18n/SigenPro_en_US.qm -->
+    <!-- <qresource prefix="/i18n">
+        <file>i18n/SigenPro_zh_CN.qm</file>
+        <file>i18n/SigenPro_en_US.qm</file>
+    </qresource> -->
 </RCC>
