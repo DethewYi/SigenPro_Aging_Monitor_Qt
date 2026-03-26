@@ -17,6 +17,7 @@ set(SOURCES
     core/data_bus/DataBus.cpp
     core/alarm_engine/AlarmEngine.cpp
     core/template_manager/TemplateManager.cpp
+    core/test_engine/TestEngine.cpp
 )
 
 set(HEADERS
@@ -39,6 +40,7 @@ set(HEADERS
     core/data_bus/DataBus.h
     core/alarm_engine/AlarmEngine.h
     core/template_manager/TemplateManager.h
+    core/test_engine/TestEngine.h
 )
 
 set(RESOURCES
