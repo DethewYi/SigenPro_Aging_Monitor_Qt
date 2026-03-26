@@ -1,0 +1,126 @@
+#include "MainWindow.h"
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QStatusBar>
+#include <QMenuBar>
+#include <QButtonGroup>
+
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent)
+{
+    setWindowTitle(tr("SigenPro Aging Monitor"));
+    resize(1400, 900);
+    setupUI();
+    setupMenuBar();
+}
+
+void MainWindow::setupUI()
+{
+    QWidget* centralWidget = new QWidget(this);
+    QHBoxLayout* mainLayout = new QHBoxLayout(centralWidget);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
+
+    setupSideNavigation();
+    setupContentArea();
+
+    mainLayout->addWidget(m_sideNav);
+    mainLayout->addWidget(m_contentStack);
+
+    setCentralWidget(centralWidget);
+    statusBar()->showMessage(tr("Ready"));
+}
+
+void MainWindow::setupMenuBar()
+{
+    QMenuBar* menuBar = this->menuBar();
+
+    QMenu* fileMenu = menuBar->addMenu(tr("&File"));
+    fileMenu->addAction(tr("&Settings"), this, [this]() {
+        m_contentStack->setCurrentIndex(m_pageSettings);
+        m_btnSettings->setChecked(true);
+    });
+    fileMenu->addSeparator();
+    fileMenu->addAction(tr("E&xit"), this, &QWidget::close);
+
+    QMenu* viewMenu = menuBar->addMenu(tr("&View"));
+    viewMenu->addAction(tr("Device &Overview"), this, [this]() {
+        m_contentStack->setCurrentIndex(m_pageOverview);
+        m_btnOverview->setChecked(true);
+    });
+    viewMenu->addAction(tr("&Alarms"), this, [this]() {
+        m_contentStack->setCurrentIndex(m_pageAlarm);
+        m_btnAlarm->setChecked(true);
+    });
+    viewMenu->addAction(tr("&Data Query"), this, [this]() {
+        m_contentStack->setCurrentIndex(m_pageDataQuery);
+        m_btnDataQuery->setChecked(true);
+    });
+}
+
+void MainWindow::setupSideNavigation()
+{
+    m_sideNav = new QWidget(this);
+    m_sideNav->setFixedWidth(200);
+    QVBoxLayout* layout = new QVBoxLayout(m_sideNav);
+    layout->setContentsMargins(8, 16, 8, 16);
+    layout->setSpacing(4);
+
+    QLabel* logo = new QLabel(tr("SigenPro"), m_sideNav);
+    logo->setAlignment(Qt::AlignCenter);
+    QFont font;
+    font.setPointSize(18);
+    font.setBold(true);
+    logo->setFont(font);
+    layout->addWidget(logo);
+    layout->addSpacing(24);
+
+    // Use a QButtonGroup to ensure mutual exclusivity among checkable buttons
+    QButtonGroup* navGroup = new QButtonGroup(this);
+    navGroup->setExclusive(true);
+
+    auto createNavButton = [&](const QString& text) -> QPushButton* {
+        QPushButton* btn = new QPushButton(text, m_sideNav);
+        btn->setCheckable(true);
+        btn->setFixedHeight(44);
+        btn->setCursor(Qt::PointingHandCursor);
+        navGroup->addButton(btn);
+        layout->addWidget(btn);
+        return btn;
+    };
+
+    m_btnOverview = createNavButton(tr("Device Overview"));
+    m_btnAlarm = createNavButton(tr("Alarms"));
+    m_btnDataQuery = createNavButton(tr("Data Query"));
+    layout->addStretch();
+    m_btnSettings = createNavButton(tr("Settings"));
+
+    m_btnOverview->setChecked(true);
+
+    // Connect button group to page switching
+    connect(navGroup, &QButtonGroup::idClicked, this, [this](int id) {
+        // QButtonGroup assigns sequential IDs starting from 0,
+        // matching our page indices
+        m_contentStack->setCurrentIndex(id);
+    });
+}
+
+void MainWindow::setupContentArea()
+{
+    m_contentStack = new QStackedWidget(this);
+
+    for (int i = 0; i < 4; ++i) {
+        QLabel* placeholder = new QLabel(m_contentStack);
+        placeholder->setAlignment(Qt::AlignCenter);
+        QFont font;
+        font.setPointSize(16);
+        placeholder->setFont(font);
+        m_contentStack->addWidget(placeholder);
+    }
+
+    static_cast<QLabel*>(m_contentStack->widget(m_pageOverview))->setText(tr("Device Overview"));
+    static_cast<QLabel*>(m_contentStack->widget(m_pageAlarm))->setText(tr("Alarm Panel"));
+    static_cast<QLabel*>(m_contentStack->widget(m_pageDataQuery))->setText(tr("Data Query"));
+    static_cast<QLabel*>(m_contentStack->widget(m_pageSettings))->setText(tr("Settings"));
+}

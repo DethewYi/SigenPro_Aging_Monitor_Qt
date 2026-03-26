@@ -1,10 +1,12 @@
 set(SOURCES
     main.cpp
     app/Application.cpp
+    ui/main_window/MainWindow.cpp
 )
 
 set(HEADERS
     app/Application.h
+    ui/main_window/MainWindow.h
 )
 
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})

@@ -2,7 +2,7 @@
 
 #include <QApplication>
 
-class MainWindow;
+#include "ui/main_window/MainWindow.h"
 
 class Application : public QApplication {
     Q_OBJECT
