@@ -10,6 +10,8 @@ set(SOURCES
     storage/sync/DataSyncManager.cpp
     storage/DatabaseManager.cpp
     protocol/plugin_loader/PluginManager.cpp
+    communication/tcp/TcpDeviceConnection.cpp
+    communication/tcp/TcpConnectionManager.cpp
 )
 
 set(HEADERS
@@ -25,6 +27,8 @@ set(HEADERS
     protocol/interface/IProtocolParser.h
     protocol/interface/IInstrumentController.h
     protocol/plugin_loader/PluginManager.h
+    communication/tcp/TcpDeviceConnection.h
+    communication/tcp/TcpConnectionManager.h
 )
 
 set(RESOURCES
