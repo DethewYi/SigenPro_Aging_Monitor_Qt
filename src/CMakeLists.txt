@@ -15,6 +15,8 @@ set(SOURCES
     communication/can/CanBridge.cpp
     communication/rs485/Rs485Bridge.cpp
     core/data_bus/DataBus.cpp
+    core/alarm_engine/AlarmEngine.cpp
+    core/template_manager/TemplateManager.cpp
 )
 
 set(HEADERS
@@ -35,6 +37,8 @@ set(HEADERS
     communication/can/CanBridge.h
     communication/rs485/Rs485Bridge.h
     core/data_bus/DataBus.h
+    core/alarm_engine/AlarmEngine.h
+    core/template_manager/TemplateManager.h
 )
 
 set(RESOURCES
