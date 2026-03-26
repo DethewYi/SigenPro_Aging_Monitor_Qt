@@ -9,6 +9,7 @@ set(SOURCES
     storage/remote_db/RemoteDatabase.cpp
     storage/sync/DataSyncManager.cpp
     storage/DatabaseManager.cpp
+    protocol/plugin_loader/PluginManager.cpp
 )
 
 set(HEADERS
@@ -21,6 +22,9 @@ set(HEADERS
     storage/remote_db/RemoteDatabase.h
     storage/sync/DataSyncManager.h
     storage/DatabaseManager.h
+    protocol/interface/IProtocolParser.h
+    protocol/interface/IInstrumentController.h
+    protocol/plugin_loader/PluginManager.h
 )
 
 set(RESOURCES
