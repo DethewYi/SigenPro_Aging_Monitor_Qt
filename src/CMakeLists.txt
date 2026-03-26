@@ -14,6 +14,8 @@ set(SOURCES
     ui/device_detail/DeviceDetailPage.cpp
     ui/alarm_panel/AlarmPanelPage.cpp
     ui/data_query/DataQueryPage.cpp
+    ui/template_config/TemplateConfigPage.cpp
+    ui/template_config/TemplateEditDialog.cpp
     storage/local_db/LocalDatabase.cpp
     storage/remote_db/RemoteDatabase.cpp
     storage/sync/DataSyncManager.cpp
@@ -46,6 +48,8 @@ set(HEADERS
     ui/device_detail/DeviceDetailPage.h
     ui/alarm_panel/AlarmPanelPage.h
     ui/data_query/DataQueryPage.h
+    ui/template_config/TemplateConfigPage.h
+    ui/template_config/TemplateEditDialog.h
     storage/local_db/LocalDatabase.h
     storage/remote_db/RemoteDatabase.h
     storage/sync/DataSyncManager.h

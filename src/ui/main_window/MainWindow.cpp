@@ -4,6 +4,7 @@
 #include "ui/device_detail/DeviceDetailPage.h"
 #include "ui/alarm_panel/AlarmPanelPage.h"
 #include "ui/data_query/DataQueryPage.h"
+#include "ui/template_config/TemplateConfigPage.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -61,6 +62,15 @@ void MainWindow::setupMenuBar()
         m_contentStack->setCurrentIndex(m_pageDataQuery);
         m_btnDataQuery->setChecked(true);
     });
+    viewMenu->addSeparator();
+    viewMenu->addAction(tr("&Template Management"), this, [this]() {
+        m_contentStack->setCurrentIndex(m_pageTemplateConfig);
+        m_btnTemplateConfig->setChecked(true);
+        m_btnOverview->setChecked(false);
+        m_btnAlarm->setChecked(false);
+        m_btnDataQuery->setChecked(false);
+        m_btnSettings->setChecked(false);
+    });
 }
 
 void MainWindow::setupSideNavigation()
@@ -98,6 +108,7 @@ void MainWindow::setupSideNavigation()
     m_btnAlarm = createNavButton(tr("Alarms"));
     m_btnDataQuery = createNavButton(tr("Data Query"));
     layout->addStretch();
+    m_btnTemplateConfig = createNavButton(tr("Template Mgmt"));
     m_btnSettings = createNavButton(tr("Settings"));
 
     m_btnOverview->setChecked(true);
@@ -127,6 +138,10 @@ void MainWindow::setupContentArea()
     m_detailPage = new DeviceDetailPage(m_contentStack);
     m_contentStack->addWidget(m_detailPage);
 
+    // Page 5: TemplateConfigPage
+    m_templateConfigPage = new TemplateConfigPage(m_contentStack);
+    m_contentStack->addWidget(m_templateConfigPage);
+
     // Connect overview page device click signal
     connect(m_overviewPage, &DeviceOverviewPage::deviceClicked,
             this, &MainWindow::onOverviewDeviceClicked);
@@ -142,6 +157,12 @@ void MainWindow::setupContentArea()
     // Connect data query page navigation signal
     connect(m_dataQueryPage, &DataQueryPage::navigateToDeviceDetail,
             this, &MainWindow::showDeviceDetail);
+
+    // Connect template config page navigation button
+    connect(m_btnTemplateConfig, &QPushButton::clicked, this, [this]() {
+        m_contentStack->setCurrentIndex(m_pageTemplateConfig);
+        m_templateConfigPage->refreshList();
+    });
 }
 
 void MainWindow::showDeviceDetail(int deviceId)
@@ -153,6 +174,7 @@ void MainWindow::showDeviceDetail(int deviceId)
     m_btnAlarm->setChecked(false);
     m_btnDataQuery->setChecked(false);
     m_btnSettings->setChecked(false);
+    m_btnTemplateConfig->setChecked(false);
 }
 
 void MainWindow::showOverviewPage()
