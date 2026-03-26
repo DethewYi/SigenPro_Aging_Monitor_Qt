@@ -8,6 +8,10 @@ set(SOURCES
     ui/device_overview/StatsBarWidget.cpp
     ui/device_overview/DeviceCardWidget.cpp
     ui/device_overview/DeviceOverviewPage.cpp
+    ui/device_detail/CurveChartWidget.cpp
+    ui/device_detail/RealtimeDataPanel.cpp
+    ui/device_detail/TestControlPanel.cpp
+    ui/device_detail/DeviceDetailPage.cpp
     storage/local_db/LocalDatabase.cpp
     storage/remote_db/RemoteDatabase.cpp
     storage/sync/DataSyncManager.cpp
@@ -34,6 +38,10 @@ set(HEADERS
     ui/device_overview/StatsBarWidget.h
     ui/device_overview/DeviceCardWidget.h
     ui/device_overview/DeviceOverviewPage.h
+    ui/device_detail/CurveChartWidget.h
+    ui/device_detail/RealtimeDataPanel.h
+    ui/device_detail/TestControlPanel.h
+    ui/device_detail/DeviceDetailPage.h
     storage/local_db/LocalDatabase.h
     storage/remote_db/RemoteDatabase.h
     storage/sync/DataSyncManager.h
@@ -67,6 +75,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Network
     Qt6::SerialPort
     Qt6::PrintSupport
+    qcustomplot::qcustomplot
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)

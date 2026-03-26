@@ -10,4 +10,13 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Sql Network SerialPort PrintSupport)
 find_package(Qt6 OPTIONAL_COMPONENTS LinguistTools)
 
+# Third-party: QCustomPlot for real-time charting
+include(FetchContent)
+FetchContent_Declare(
+    qcustomplot
+    GIT_REPOSITORY https://github.com/AmonSaken/QCustomPlot-qt6.git
+    GIT_TAG v2.1.1
+)
+FetchContent_MakeAvailable(qcustomplot)
+
 add_subdirectory(src)

@@ -6,12 +6,16 @@
 
 class SettingsPage;
 class DeviceOverviewPage;
+class DeviceDetailPage;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() = default;
+
+    void showDeviceDetail(int deviceId);
+    void showOverviewPage();
 
 private:
     void setupUI();
@@ -29,9 +33,15 @@ private:
 
     DeviceOverviewPage* m_overviewPage = nullptr;
     SettingsPage* m_settingsPage = nullptr;
+    DeviceDetailPage* m_detailPage = nullptr;
 
     int m_pageOverview = 0;
     int m_pageAlarm = 1;
     int m_pageDataQuery = 2;
     int m_pageSettings = 3;
+    int m_pageDetail = 4;
+
+private slots:
+    void onOverviewDeviceClicked(int deviceId);
+    void onDetailBackRequested();
 };

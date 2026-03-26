@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "ui/settings/SettingsPage.h"
 #include "ui/device_overview/DeviceOverviewPage.h"
+#include "ui/device_detail/DeviceDetailPage.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -48,8 +49,7 @@ void MainWindow::setupMenuBar()
 
     QMenu* viewMenu = menuBar->addMenu(tr("&View"));
     viewMenu->addAction(tr("Device &Overview"), this, [this]() {
-        m_contentStack->setCurrentIndex(m_pageOverview);
-        m_btnOverview->setChecked(true);
+        showOverviewPage();
     });
     viewMenu->addAction(tr("&Alarms"), this, [this]() {
         m_contentStack->setCurrentIndex(m_pageAlarm);
@@ -99,13 +99,6 @@ void MainWindow::setupSideNavigation()
     m_btnSettings = createNavButton(tr("Settings"));
 
     m_btnOverview->setChecked(true);
-
-    // Connect button group to page switching
-    connect(navGroup, &QButtonGroup::idClicked, this, [this](int id) {
-        // QButtonGroup assigns sequential IDs starting from 0,
-        // matching our page indices
-        m_contentStack->setCurrentIndex(id);
-    });
 }
 
 void MainWindow::setupContentArea()
@@ -132,4 +125,43 @@ void MainWindow::setupContentArea()
     // Page 3: real SettingsPage
     m_settingsPage = new SettingsPage(m_contentStack);
     m_contentStack->addWidget(m_settingsPage);
+
+    // Page 4: DeviceDetailPage
+    m_detailPage = new DeviceDetailPage(m_contentStack);
+    m_contentStack->addWidget(m_detailPage);
+
+    // Connect overview page device click signal
+    connect(m_overviewPage, &DeviceOverviewPage::deviceClicked,
+            this, &MainWindow::onOverviewDeviceClicked);
+
+    // Connect detail page back signal
+    connect(m_detailPage, &DeviceDetailPage::backRequested,
+            this, &MainWindow::onDetailBackRequested);
+}
+
+void MainWindow::showDeviceDetail(int deviceId)
+{
+    m_detailPage->setDevice(deviceId);
+    m_contentStack->setCurrentIndex(m_pageDetail);
+    // Uncheck all nav buttons (detail page is not a nav target)
+    m_btnOverview->setChecked(false);
+    m_btnAlarm->setChecked(false);
+    m_btnDataQuery->setChecked(false);
+    m_btnSettings->setChecked(false);
+}
+
+void MainWindow::showOverviewPage()
+{
+    m_contentStack->setCurrentIndex(m_pageOverview);
+    m_btnOverview->setChecked(true);
+}
+
+void MainWindow::onOverviewDeviceClicked(int deviceId)
+{
+    showDeviceDetail(deviceId);
+}
+
+void MainWindow::onDetailBackRequested()
+{
+    showOverviewPage();
 }
