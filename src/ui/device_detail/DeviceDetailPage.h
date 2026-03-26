@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include "core/common/DeviceData.h"
 
 class RealtimeDataPanel;
 class CurveChartWidget;

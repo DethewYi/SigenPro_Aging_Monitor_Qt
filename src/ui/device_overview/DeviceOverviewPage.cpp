@@ -1,6 +1,7 @@
 #include "DeviceOverviewPage.h"
 #include "StatsBarWidget.h"
 #include "DeviceCardWidget.h"
+#include "core/common/DeviceData.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -262,4 +263,21 @@ bool DeviceOverviewPage::eventFilter(QObject* watched, QEvent* event)
         rebuildGrid();
     }
     return QWidget::eventFilter(watched, event);
+}
+
+void DeviceOverviewPage::updateDeviceStatus(int deviceId, DeviceStatus status)
+{
+    auto it = m_deviceCards.find(deviceId);
+    if (it != m_deviceCards.end()) {
+        it.value()->setStatus(status);
+        rebuildGrid();
+    }
+}
+
+void DeviceOverviewPage::onDeviceDataUpdated(const DeviceData& data)
+{
+    auto it = m_deviceCards.find(data.deviceId);
+    if (it != m_deviceCards.end()) {
+        it.value()->updateParameters(data.parameters);
+    }
 }

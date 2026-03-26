@@ -168,6 +168,31 @@ void DeviceCardWidget::clearParameters()
     }
 }
 
+void DeviceCardWidget::updateParameters(const QMap<QString, double>& parameters)
+{
+    for (auto it = parameters.constBegin(); it != parameters.constEnd(); ++it) {
+        // Try to find a matching param label key
+        // Map common parameter names to the card's display keys
+        QString key = it.key();
+        QString displayKey;
+        if (key.contains("voltage", Qt::CaseInsensitive) ||
+            key.compare("V", Qt::CaseInsensitive) == 0 ||
+            key.compare("U", Qt::CaseInsensitive) == 0) {
+            displayKey = QStringLiteral("V");
+        } else if (key.contains("current", Qt::CaseInsensitive) ||
+                   key.compare("A", Qt::CaseInsensitive) == 0 ||
+                   key.compare("I", Qt::CaseInsensitive) == 0) {
+            displayKey = QStringLiteral("A");
+        } else if (key.contains("temp", Qt::CaseInsensitive) ||
+                   key.compare("T", Qt::CaseInsensitive) == 0) {
+            displayKey = QStringLiteral("T");
+        } else {
+            displayKey = key;
+        }
+        updateParameter(displayKey, it.value(), {});
+    }
+}
+
 void DeviceCardWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {

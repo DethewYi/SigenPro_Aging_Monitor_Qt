@@ -14,6 +14,7 @@ public:
     void setDeviceInfo(const QString& name, const QString& model, const QString& sn);
     void setStatus(DeviceStatus status);
     void updateParameter(const QString& name, double value, const QString& unit);
+    void updateParameters(const QMap<QString, double>& parameters);
     void clearParameters();
 
 signals:

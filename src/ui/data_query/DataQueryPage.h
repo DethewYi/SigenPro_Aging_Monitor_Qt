@@ -13,6 +13,8 @@ public:
 
 signals:
     void navigateToDeviceDetail(int deviceId);
+    void exportPdfRequested(int recordId);
+    void exportExcelRequested(int recordId);
 
 private slots:
     void onQuery();

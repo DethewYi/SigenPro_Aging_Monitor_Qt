@@ -25,6 +25,7 @@ private:
     void setupMenuBar();
     void setupSideNavigation();
     void setupContentArea();
+    void setupDataBusConnections();
 
     QWidget* m_sideNav = nullptr;
     QStackedWidget* m_contentStack = nullptr;
@@ -52,4 +53,5 @@ private:
 private slots:
     void onOverviewDeviceClicked(int deviceId);
     void onDetailBackRequested();
+    void onStackedPageChanged(int index);
 };

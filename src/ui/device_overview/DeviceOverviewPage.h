@@ -10,6 +10,7 @@ class QComboBox;
 class QLineEdit;
 class QScrollArea;
 class QGridLayout;
+struct DeviceData;
 
 class DeviceOverviewPage : public QWidget {
     Q_OBJECT
@@ -20,6 +21,8 @@ public:
     void addOrUpdateDevice(int deviceId, const QString& name, const QString& model,
                            const QString& sn, DeviceStatus status);
     void removeDevice(int deviceId);
+    void updateDeviceStatus(int deviceId, DeviceStatus status);
+    void onDeviceDataUpdated(const DeviceData& data);
 
 signals:
     void deviceClicked(int deviceId);

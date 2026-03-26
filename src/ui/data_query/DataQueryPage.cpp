@@ -14,19 +14,22 @@
 #include <QPushButton>
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QSqlError>
 #include <QDebug>
+#include <QMessageBox>
 
 // Column indices for results table
 enum ResultColumn {
-    ResDeviceId = 0,
-    ResSN = 1,
-    ResPN = 2,
-    ResTemplate = 3,
-    ResStartTime = 4,
-    ResEndTime = 5,
-    ResDuration = 6,
-    ResResult = 7,
-    ResCount = 8
+    ResRecordId = 0,
+    ResDeviceId = 1,
+    ResSN = 2,
+    ResPN = 3,
+    ResTemplate = 4,
+    ResStartTime = 5,
+    ResEndTime = 6,
+    ResDuration = 7,
+    ResResult = 8,
+    ResCount = 9
 };
 
 DataQueryPage::DataQueryPage(QWidget* parent)
@@ -104,7 +107,7 @@ void DataQueryPage::setupUI()
     m_resultsTable = new QTableWidget(resultsBox);
     m_resultsTable->setColumnCount(ResCount);
     m_resultsTable->setHorizontalHeaderLabels({
-        tr("ID"), tr("SN"), tr("PN"), tr("Template"),
+        tr("ID"), tr("Device ID"), tr("SN"), tr("PN"), tr("Template"),
         tr("Start Time"), tr("End Time"), tr("Duration"), tr("Result")
     });
     m_resultsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
@@ -114,7 +117,8 @@ void DataQueryPage::setupUI()
     m_resultsTable->setAlternatingRowColors(true);
     m_resultsTable->verticalHeader()->setVisible(false);
 
-    // Hide the ID column (used internally for navigation)
+    // Hide the internal ID columns (used for export/navigation)
+    m_resultsTable->setColumnHidden(ResRecordId, true);
     m_resultsTable->setColumnHidden(ResDeviceId, true);
 
     resultsLayout->addWidget(m_resultsTable);
@@ -170,9 +174,9 @@ void DataQueryPage::onQuery()
     QDateTime startTime = QDateTime(m_startDate->date(), QTime(0, 0, 0));
     QDateTime endTime = QDateTime(m_endDate->date(), QTime(23, 59, 59));
 
-    // Build query with optional filters
+    // Build query with optional filters (include id for export functionality)
     QString sql = QLatin1String(
-        "SELECT device_id, sn, pn, template_name, start_time, end_time, result "
+        "SELECT id, device_id, sn, pn, template_name, start_time, end_time, result "
         "FROM test_records "
         "WHERE start_time >= ? AND start_time <= ?");
 
@@ -200,15 +204,21 @@ void DataQueryPage::onQuery()
 
         int row = 0;
         while (directQ.next()) {
-            int deviceId = directQ.value(0).toInt();
-            QString sn = directQ.value(1).toString();
-            QString pn = directQ.value(2).toString();
-            QString templateName = directQ.value(3).toString();
-            QString startStr = directQ.value(4).toString();
-            QString endStr = directQ.value(5).toString();
-            int result = directQ.value(6).toInt();
+            int recordId = directQ.value(0).toInt();
+            int deviceId = directQ.value(1).toInt();
+            QString sn = directQ.value(2).toString();
+            QString pn = directQ.value(3).toString();
+            QString templateName = directQ.value(4).toString();
+            QString startStr = directQ.value(5).toString();
+            QString endStr = directQ.value(6).toString();
+            int result = directQ.value(7).toInt();
 
             m_resultsTable->insertRow(row);
+
+            // Record ID (hidden, for export)
+            auto* recIdItem = new QTableWidgetItem;
+            recIdItem->setData(Qt::DisplayRole, recordId);
+            m_resultsTable->setItem(row, ResRecordId, recIdItem);
 
             // Device ID (hidden, for navigation)
             auto* idItem = new QTableWidgetItem;
@@ -274,14 +284,38 @@ void DataQueryPage::onQuery()
 
 void DataQueryPage::onExportPdf()
 {
-    // Stub: will be connected to PDF report generator in Task 24
-    qInfo() << "DataQueryPage: Export PDF requested (stub)";
+    int row = m_resultsTable->currentRow();
+    if (row < 0 || row >= m_resultsTable->rowCount()) {
+        QMessageBox::information(this, tr("Export PDF"),
+            tr("Please select a record to export."));
+        return;
+    }
+
+    auto* idItem = m_resultsTable->item(row, ResRecordId);
+    if (!idItem) {
+        return;
+    }
+
+    int recordId = idItem->data(Qt::DisplayRole).toInt();
+    emit exportPdfRequested(recordId);
 }
 
 void DataQueryPage::onExportExcel()
 {
-    // Stub: will be connected to Excel report generator in Task 25
-    qInfo() << "DataQueryPage: Export Excel requested (stub)";
+    int row = m_resultsTable->currentRow();
+    if (row < 0 || row >= m_resultsTable->rowCount()) {
+        QMessageBox::information(this, tr("Export Excel"),
+            tr("Please select a record to export."));
+        return;
+    }
+
+    auto* idItem = m_resultsTable->item(row, ResRecordId);
+    if (!idItem) {
+        return;
+    }
+
+    int recordId = idItem->data(Qt::DisplayRole).toInt();
+    emit exportExcelRequested(recordId);
 }
 
 void DataQueryPage::onTableDoubleClicked(int row, int column)

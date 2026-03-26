@@ -5,12 +5,18 @@
 #include "ui/alarm_panel/AlarmPanelPage.h"
 #include "ui/data_query/DataQueryPage.h"
 #include "ui/template_config/TemplateConfigPage.h"
+#include "core/data_bus/DataBus.h"
+#include "core/common/DeviceData.h"
+#include "core/common/AlarmRecord.h"
+#include "report/PdfReportGenerator.h"
+#include "report/ExcelReportGenerator.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QStatusBar>
 #include <QMenuBar>
 #include <QButtonGroup>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -19,6 +25,7 @@ MainWindow::MainWindow(QWidget* parent)
     resize(1400, 900);
     setupUI();
     setupMenuBar();
+    setupDataBusConnections();
 }
 
 void MainWindow::setupUI()
@@ -163,6 +170,68 @@ void MainWindow::setupContentArea()
         m_contentStack->setCurrentIndex(m_pageTemplateConfig);
         m_templateConfigPage->refreshList();
     });
+
+    // Connect QStackedWidget currentChanged to update nav button highlighting
+    connect(m_contentStack, &QStackedWidget::currentChanged,
+            this, &MainWindow::onStackedPageChanged);
+}
+
+void MainWindow::setupDataBusConnections()
+{
+    // Connect DataBus device status changes -> DeviceOverviewPage
+    connect(&DataBus::instance(), &DataBus::deviceStatusChanged,
+            m_overviewPage, [this](int deviceId, DeviceStatus status) {
+        Q_UNUSED(this);
+        m_overviewPage->updateDeviceStatus(deviceId, status);
+    });
+
+    // Connect DataBus device data -> DeviceOverviewPage (for parameter display on cards)
+    connect(&DataBus::instance(), &DataBus::deviceDataReceived,
+            m_overviewPage, [this](const DeviceData& data) {
+        Q_UNUSED(this);
+        // Update the card's parameter display when data arrives
+        // DeviceOverviewPage::addOrUpdateDevice can be used to refresh card info
+        m_overviewPage->onDeviceDataUpdated(data);
+    });
+
+    // Connect DataBus alarm triggered -> AlarmPanelPage
+    connect(&DataBus::instance(), &DataBus::alarmTriggered,
+            m_alarmPage, [this](const AlarmRecord& alarm) {
+        Q_UNUSED(this);
+        m_alarmPage->addAlarm(alarm.id, alarm.timestamp.toString("yyyy-MM-dd HH:mm:ss"),
+                              alarm.deviceId, alarm.deviceName, alarm.paramName,
+                              alarm.currentValue, alarm.threshold,
+                              alarm.isUpperLimit, alarm.acknowledged);
+    });
+
+    // Connect DataBus device data -> DeviceDetailPage
+    connect(&DataBus::instance(), &DataBus::deviceDataReceived,
+            m_detailPage, &DeviceDetailPage::onDeviceDataReceived);
+
+    // Connect export buttons from DataQueryPage to report generators
+    connect(m_dataQueryPage, &DataQueryPage::exportPdfRequested, this, [this](int recordId) {
+        Q_UNUSED(this);
+        QString path = QFileDialog::getSaveFileName(this, tr("Save PDF Report"),
+            QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + "_report.pdf",
+            "PDF Files (*.pdf)");
+        if (!path.isEmpty()) {
+            PdfReportGenerator gen;
+            gen.generateReport(recordId, path);
+            statusBar()->showMessage(tr("PDF report exported: %1").arg(path), 5000);
+        }
+    });
+
+    connect(m_dataQueryPage, &DataQueryPage::exportExcelRequested, this, [this](int recordId) {
+        Q_UNUSED(this);
+        QString path = QFileDialog::getSaveFileName(this, tr("Save Excel Report"),
+            QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + "_report.csv",
+            "CSV Files (*.csv);;Excel Files (*.xlsx)");
+        if (!path.isEmpty()) {
+            ExcelReportGenerator gen;
+            gen.generateReport(recordId, path);
+            statusBar()->showMessage(tr("Excel report exported: %1").arg(path), 5000);
+        }
+    });
 }
 
 void MainWindow::showDeviceDetail(int deviceId)
@@ -191,4 +260,35 @@ void MainWindow::onOverviewDeviceClicked(int deviceId)
 void MainWindow::onDetailBackRequested()
 {
     showOverviewPage();
+}
+
+void MainWindow::onStackedPageChanged(int index)
+{
+    // Uncheck all nav buttons first
+    m_btnOverview->setChecked(false);
+    m_btnAlarm->setChecked(false);
+    m_btnDataQuery->setChecked(false);
+    m_btnSettings->setChecked(false);
+    m_btnTemplateConfig->setChecked(false);
+
+    // Check the corresponding button based on the page index
+    switch (index) {
+    case m_pageOverview:
+        m_btnOverview->setChecked(true);
+        break;
+    case m_pageAlarm:
+        m_btnAlarm->setChecked(true);
+        break;
+    case m_pageDataQuery:
+        m_btnDataQuery->setChecked(true);
+        break;
+    case m_pageSettings:
+        m_btnSettings->setChecked(true);
+        break;
+    case m_pageTemplateConfig:
+        m_btnTemplateConfig->setChecked(true);
+        break;
+    default:
+        break; // Detail page or other -- no nav button to highlight
+    }
 }
