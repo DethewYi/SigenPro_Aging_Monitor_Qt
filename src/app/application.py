@@ -28,7 +28,7 @@ class Application(QApplication):
     def __init__(self, argv):
         super().__init__(argv)
         self.setApplicationName("SigenPro Aging Monitor")
-        self.setApplicationVersion("1.0.0")
+        self.setApplicationVersion("1.2.0")
         self.setOrganizationName("SigenPro")
 
         self._settings = QSettings("SigenPro", "SigenProAgingMonitor")

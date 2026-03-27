@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QScrollArea,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QEvent
 
 from ..app.theme_manager import ThemeManager
 from ..app.language_manager import LanguageManager
@@ -47,6 +47,7 @@ class SettingsPage(QWidget):
         main_layout.setSpacing(0)
 
         title = QLabel(self.tr("Settings"))
+        self._title_label = title
         font = title.font()
         font.setPointSize(18)
         font.setBold(True)
@@ -64,8 +65,8 @@ class SettingsPage(QWidget):
         scroll_layout.setSpacing(16)
 
         # --- Appearance group ---
-        appearance_group = QGroupBox(self.tr("Appearance"))
-        appearance_form = QFormLayout(appearance_group)
+        self._appearance_group = QGroupBox(self.tr("Appearance"))
+        appearance_form = QFormLayout(self._appearance_group)
 
         self._theme_combo = QComboBox()
         for name in ThemeManager.available_themes():
@@ -79,11 +80,11 @@ class SettingsPage(QWidget):
         self._language_combo.currentIndexChanged.connect(self._on_language_changed)
         appearance_form.addRow(self.tr("Language:"), self._language_combo)
 
-        scroll_layout.addWidget(appearance_group)
+        scroll_layout.addWidget(self._appearance_group)
 
         # --- Database group ---
-        db_group = QGroupBox(self.tr("Database"))
-        db_form = QFormLayout(db_group)
+        self._db_group = QGroupBox(self.tr("Database"))
+        db_form = QFormLayout(self._db_group)
 
         self._db_host_edit = QLineEdit("localhost")
         self._db_port_spin = QSpinBox()
@@ -113,11 +114,11 @@ class SettingsPage(QWidget):
         self._test_db_btn.clicked.connect(self._on_test_db_connection)
         db_form.addRow("", self._test_db_btn)
 
-        scroll_layout.addWidget(db_group)
+        scroll_layout.addWidget(self._db_group)
 
         # --- Data Retention group ---
-        retention_group = QGroupBox(self.tr("Data Retention"))
-        retention_form = QFormLayout(retention_group)
+        self._retention_group = QGroupBox(self.tr("Data Retention"))
+        retention_form = QFormLayout(self._retention_group)
 
         self._retention_days_spin = QSpinBox()
         self._retention_days_spin.setRange(1, 3650)
@@ -131,11 +132,11 @@ class SettingsPage(QWidget):
             self.tr("Keep data for:"), self._retention_days_spin
         )
 
-        scroll_layout.addWidget(retention_group)
+        scroll_layout.addWidget(self._retention_group)
 
         # --- Communication group ---
-        comm_group = QGroupBox(self.tr("Communication"))
-        comm_form = QFormLayout(comm_group)
+        self._comm_group = QGroupBox(self.tr("Communication"))
+        comm_form = QFormLayout(self._comm_group)
 
         self._comm_timeout_spin = QSpinBox()
         self._comm_timeout_spin.setRange(100, 60000)
@@ -155,7 +156,7 @@ class SettingsPage(QWidget):
         )
         comm_form.addRow(self._sim_check)
 
-        scroll_layout.addWidget(comm_group)
+        scroll_layout.addWidget(self._comm_group)
 
         scroll_layout.addStretch()
         scroll.setWidget(scroll_content)
@@ -348,3 +349,27 @@ class SettingsPage(QWidget):
         self._sim_check.blockSignals(True)
         self._sim_check.setChecked(running)
         self._sim_check.blockSignals(False)
+
+    # ------------------------------------------------------------------
+    # Retranslate
+    # ------------------------------------------------------------------
+
+    def changeEvent(self, event):
+        if event.type() == QEvent.Type.LanguageChange:
+            self.retranslate_ui()
+        super().changeEvent(event)
+
+    def retranslate_ui(self):
+        self._title_label.setText(self.tr("Settings"))
+        self._appearance_group.setTitle(self.tr("Appearance"))
+        self._db_group.setTitle(self.tr("Database"))
+        self._retention_group.setTitle(self.tr("Data Retention"))
+        self._comm_group.setTitle(self.tr("Communication"))
+        self._sim_check.setText(self.tr("Simulation Mode"))
+        self._sim_check.setToolTip(
+            self.tr("Enable built-in device data simulator for demo / testing")
+        )
+        self._test_db_btn.setText(self.tr("Test Connection"))
+        self._save_btn.setText(self.tr("Save"))
+        self._reset_btn.setText(self.tr("Reset"))
+        self._retention_days_spin.setSuffix(self.tr(" days"))

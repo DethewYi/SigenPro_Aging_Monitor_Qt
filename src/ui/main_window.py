@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QButtonGroup,
     QApplication,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QEvent
 
 
 class MainWindow(QMainWindow):
@@ -26,6 +26,16 @@ class MainWindow(QMainWindow):
     PAGE_TEMPLATE_MGMT = 4
     PAGE_SETTINGS = 5
     PAGE_RECIPE_MGMT = 6
+
+    # Store the original tr-key for each nav button so we can retranslate
+    _nav_labels = {
+        PAGE_DEVICE_OVERVIEW: "Device Overview",
+        PAGE_ALARMS: "Alarms",
+        PAGE_DATA_QUERY: "Data Query",
+        PAGE_TEMPLATE_MGMT: "Template Mgmt",
+        PAGE_RECIPE_MGMT: "Recipe Mgmt",
+        PAGE_SETTINGS: "Settings",
+    }
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -121,7 +131,28 @@ class MainWindow(QMainWindow):
         btn.setFixedHeight(44)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setProperty("class", "nav-button")
+        # Store the original key for retranslation
+        btn._tr_key = text
         return btn
+
+    def changeEvent(self, event):
+        if event.type() == QEvent.Type.LanguageChange:
+            self.retranslate_ui()
+        super().changeEvent(event)
+
+    def retranslate_ui(self):
+        """Refresh all translatable strings after a language switch."""
+        self.setWindowTitle(self.tr("SigenPro Aging Monitor"))
+        self.statusBar().showMessage(self.tr("Ready"))
+
+        # Navigation buttons
+        for idx, btn in self._nav_buttons.items():
+            if hasattr(btn, '_tr_key'):
+                btn.setText(self.tr(btn._tr_key))
+
+        # Menu bar
+        self.menuBar().clear()
+        self._setup_menu_bar()
 
     def _on_page_changed(self, index: int):
         """Highlight the correct nav button when the stacked page changes."""

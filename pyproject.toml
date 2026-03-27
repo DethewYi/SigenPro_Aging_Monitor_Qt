@@ -1,6 +1,6 @@
 [project]
 name = "sigenpro-aging-monitor"
-version = "1.0.0"
+version = "1.2.0"
 description = "储能产品老化监控系统"
 requires-python = ">=3.10"
 dependencies = [
