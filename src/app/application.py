@@ -235,6 +235,16 @@ class Application(QApplication):
         DataBus.instance().device_data_received.connect(
             self._device_overview_page.on_device_data_updated)
 
+        # Overview control -> Simulator
+        self._device_overview_page.all_started.connect(
+            lambda: self._simulator.set_all_running(True))
+        self._device_overview_page.all_stopped.connect(
+            lambda: self._simulator.set_all_running(False))
+        self._device_overview_page.device_start_clicked.connect(
+            lambda did: self._simulator.set_running(did, True))
+        self._device_overview_page.device_stop_clicked.connect(
+            lambda did: self._simulator.set_running(did, False))
+
         # DataBus -> Alarm Panel
         DataBus.instance().alarm_triggered.connect(self._on_alarm_triggered)
 

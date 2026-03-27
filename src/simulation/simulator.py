@@ -147,10 +147,16 @@ class Simulator(QObject):
         """Set a simulated device's test running state."""
         dev = self._devices.get(device_id)
         if dev:
+            dev["offline"] = False
             dev["status"] = DeviceStatus.TESTING if running else DeviceStatus.IDLE
             DataBus.instance().publish_device_status(
                 device_id, dev["status"]
             )
+
+    def set_all_running(self, running: bool):
+        """Set all devices to running or idle."""
+        for device_id in self._devices:
+            self.set_running(device_id, running)
 
     def _init_devices(self, configs: list[dict]):
         """Build internal device state from config list."""

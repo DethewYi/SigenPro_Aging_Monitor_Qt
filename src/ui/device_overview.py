@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QGridLayout,
     QApplication,
+    QPushButton,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
@@ -68,6 +69,8 @@ class DeviceCardWidget(QWidget):
     """Compact card representing a single device with status indicator."""
 
     clicked = pyqtSignal(int)
+    start_clicked = pyqtSignal(int)
+    stop_clicked = pyqtSignal(int)
 
     STATUS_COLORS = {
         DeviceStatus.TESTING: "#a6e3a1",
@@ -122,8 +125,27 @@ class DeviceCardWidget(QWidget):
         self._params_label.setStyleSheet("font-size: 11px;")
         layout.addWidget(self._params_label)
 
+        # Control buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(0, 4, 0, 0)
+        btn_layout.setSpacing(6)
+
+        self._start_btn = QPushButton(self.tr("\u25b6 Start"))
+        self._start_btn.setFixedHeight(24)
+        self._start_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._start_btn.clicked.connect(self._on_start)
+
+        self._stop_btn = QPushButton(self.tr("\u25a0 Stop"))
+        self._stop_btn.setFixedHeight(24)
+        self._stop_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._stop_btn.clicked.connect(self._on_stop)
+
+        btn_layout.addWidget(self._start_btn)
+        btn_layout.addWidget(self._stop_btn)
+        layout.addLayout(btn_layout)
+
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setFixedHeight(120)
+        self.setFixedHeight(150)
         self._apply_style()
 
     # --- Public API -------------------------------------------------------
@@ -135,6 +157,9 @@ class DeviceCardWidget(QWidget):
     def set_status(self, status: DeviceStatus):
         self._status = status
         self._status_label.setText(self.STATUS_TEXTS.get(status, "Unknown"))
+        # Show Start when IDLE, Stop when TESTING
+        self._start_btn.setVisible(status in (DeviceStatus.IDLE, DeviceStatus.COMPLETED, DeviceStatus.OFFLINE))
+        self._stop_btn.setVisible(status == DeviceStatus.TESTING)
         self._apply_style()
 
     def update_parameters(self, params: dict):
@@ -142,6 +167,14 @@ class DeviceCardWidget(QWidget):
         ``key: value`` joined by ``|``, capped at 3 entries."""
         parts = [f"{k}: {v:.1f}" for k, v in params.items()]
         self._params_label.setText(" | ".join(parts[:3]) if parts else "--")
+
+    # --- Button slots (stop propagation to avoid card click) ---------------
+
+    def _on_start(self):
+        self.start_clicked.emit(self.device_id)
+
+    def _on_stop(self):
+        self.stop_clicked.emit(self.device_id)
 
     # --- Internals --------------------------------------------------------
 
@@ -179,6 +212,10 @@ class DeviceOverviewPage(QWidget):
     """Full device overview: stats bar, filter bar, and scrollable card grid."""
 
     device_clicked = pyqtSignal(int)
+    device_start_clicked = pyqtSignal(int)
+    device_stop_clicked = pyqtSignal(int)
+    all_started = pyqtSignal()
+    all_stopped = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -210,11 +247,23 @@ class DeviceOverviewPage(QWidget):
         self._search_edit.setClearButtonEnabled(True)
         self._search_edit.textChanged.connect(self._apply_filters)
 
+        # Global control buttons
+        self._start_all_btn = QPushButton(self.tr("\u25b6 Start All"))
+        self._start_all_btn.setProperty("style", "primary")
+        self._start_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._start_all_btn.clicked.connect(self.all_started.emit)
+
+        self._stop_all_btn = QPushButton(self.tr("\u25a0 Stop All"))
+        self._stop_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._stop_all_btn.clicked.connect(self.all_stopped.emit)
+
         filter_layout.addWidget(QLabel(self.tr("Status:")))
         filter_layout.addWidget(self._status_filter)
         filter_layout.addWidget(QLabel(self.tr("Model:")))
         filter_layout.addWidget(self._model_filter)
         filter_layout.addWidget(self._search_edit)
+        filter_layout.addWidget(self._start_all_btn)
+        filter_layout.addWidget(self._stop_all_btn)
         filter_layout.addStretch()
         layout.addLayout(filter_layout)
 
@@ -240,6 +289,8 @@ class DeviceOverviewPage(QWidget):
         if device_id not in self._cards:
             card = DeviceCardWidget(device_id)
             card.clicked.connect(self.device_clicked.emit)
+            card.start_clicked.connect(self.device_start_clicked.emit)
+            card.stop_clicked.connect(self.device_stop_clicked.emit)
             self._cards[device_id] = card
 
         card = self._cards[device_id]
