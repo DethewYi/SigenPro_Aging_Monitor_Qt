@@ -64,10 +64,13 @@ class AlarmPanelPage(QWidget):
         # Acknowledge buttons
         self._ack_selected_btn = QPushButton(self.tr("Acknowledge Selected"))
         self._ack_all_btn = QPushButton(self.tr("Acknowledge All"))
+        self._clear_btn = QPushButton(self.tr("Clear All"))
         self._ack_selected_btn.clicked.connect(self._acknowledge_selected)
         self._ack_all_btn.clicked.connect(self._acknowledge_all)
+        self._clear_btn.clicked.connect(self._clear_all)
         top_bar.addWidget(self._ack_selected_btn)
         top_bar.addWidget(self._ack_all_btn)
+        top_bar.addWidget(self._clear_btn)
 
         # Stats labels
         self._total_label = QLabel(self.tr("Total: 0"))
@@ -237,6 +240,12 @@ class AlarmPanelPage(QWidget):
                 record.acknowledged = True
                 self._update_row_status(row, True)
 
+        self._update_stats()
+
+    def _clear_all(self):
+        """Remove all alarm records from the table."""
+        self._table.setRowCount(0)
+        self._alarm_records.clear()
         self._update_stats()
 
     def _on_cell_double_clicked(self, row: int, _col: int):

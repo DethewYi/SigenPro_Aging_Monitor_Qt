@@ -124,8 +124,25 @@ class MainWindow(QMainWindow):
     def _on_page_changed(self, index: int):
         """Highlight the correct nav button when the stacked page changes."""
         btn = self._nav_buttons.get(index)
-        if btn and btn.isCheckable():
+        if not btn:
+            return
+        if btn.isCheckable():
             btn.setChecked(True)
+        else:
+            # For non-exclusive buttons, highlight briefly then reset
+            for other_btn in self._nav_buttons.values():
+                if other_btn.isCheckable():
+                    other_btn.setChecked(False)
+            btn.setProperty("active", True)
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
+            # Use a single-shot timer to clear highlight
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(300, lambda b=btn: (
+                b.setProperty("active", False),
+                b.style().unpolish(b),
+                b.style().polish(b),
+            ))
 
     def _setup_menu_bar(self):
         menu_bar = self.menuBar()

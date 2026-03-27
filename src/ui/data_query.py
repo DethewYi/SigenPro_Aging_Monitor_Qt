@@ -57,6 +57,8 @@ class DataQueryPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._records: list[dict] = []
+        self._page_size = 50
+        self._current_page = 0
         self._setup_ui()
 
     def _setup_ui(self):
@@ -123,6 +125,25 @@ class DataQueryPage(QWidget):
         export_bar.addWidget(self._stats_label)
         layout.addLayout(export_bar)
 
+        # --- Pagination bar ---
+        page_bar = QHBoxLayout()
+        self._prev_btn = QPushButton(self.tr("< Previous"))
+        self._next_btn = QPushButton(self.tr("Next >"))
+        self._page_label = QLabel("")
+        self._page_spin = QComboBox()
+        self._page_spin.setMinimumWidth(80)
+
+        self._prev_btn.clicked.connect(self._on_prev_page)
+        self._next_btn.clicked.connect(self._on_next_page)
+        self._page_spin.currentIndexChanged.connect(self._on_page_spin_changed)
+
+        page_bar.addWidget(self._prev_btn)
+        page_bar.addWidget(self._next_btn)
+        page_bar.addWidget(self._page_label)
+        page_bar.addWidget(self._page_spin)
+        page_bar.addStretch()
+        layout.addLayout(page_bar)
+
         # --- Results table ---
         self._table = QTableWidget(0, 8)
         headers = [
@@ -184,9 +205,20 @@ class DataQueryPage(QWidget):
         ``device_id``.
         """
         self._records = list(records)
-        self._table.setRowCount(len(records))
+        self._current_page = 0
+        self._populate_page_table()
+        self._update_pagination()
 
-        for row, rec in enumerate(records):
+    def _populate_page_table(self):
+        """Fill the table with records for the current page."""
+        start = self._current_page * self._page_size
+        end = start + self._page_size
+        page_records = self._records[start:end]
+
+        self._table.setRowCount(len(page_records))
+
+        for row_offset, rec in enumerate(page_records):
+            row = row_offset
             self._table.setItem(
                 row, self.COL_ID, QTableWidgetItem(str(rec.get("record_id", "")))
             )
@@ -233,7 +265,46 @@ class DataQueryPage(QWidget):
             result_item.setForeground(QColor(self._result_color(result_enum)))
             self._table.setItem(row, self.COL_RESULT, result_item)
 
-        self._stats_label.setText(self.tr(f"Records: {len(records)}"))
+        self._stats_label.setText(
+            self.tr(f"Records: {len(self._records)} | "
+                    f"Page {self._current_page + 1}/{self._total_pages()}")
+        )
+
+    def _total_pages(self) -> int:
+        if not self._records:
+            return 1
+        return (len(self._records) + self._page_size - 1) // self._page_size
+
+    def _update_pagination(self):
+        total = self._total_pages()
+        self._prev_btn.setEnabled(self._current_page > 0)
+        self._next_btn.setEnabled(self._current_page < total - 1)
+
+        # Update page combo
+        self._page_spin.blockSignals(True)
+        self._page_spin.clear()
+        for i in range(total):
+            self._page_spin.addItem(self.tr(f"Page {i + 1}"), i)
+        self._page_spin.setCurrentIndex(self._current_page)
+        self._page_spin.blockSignals(False)
+
+    def _on_prev_page(self):
+        if self._current_page > 0:
+            self._current_page -= 1
+            self._populate_page_table()
+            self._update_pagination()
+
+    def _on_next_page(self):
+        if self._current_page < self._total_pages() - 1:
+            self._current_page += 1
+            self._populate_page_table()
+            self._update_pagination()
+
+    def _on_page_spin_changed(self, index: int):
+        if 0 <= index < self._total_pages():
+            self._current_page = index
+            self._populate_page_table()
+            self._update_pagination()
 
     # --- Query action -----------------------------------------------------
 

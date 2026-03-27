@@ -199,6 +199,7 @@ class DeviceOverviewPage(QWidget):
 
         self._status_filter = QComboBox()
         self._status_filter.addItems(["All", "Testing", "Idle", "Offline", "Alarm"])
+        self._status_filter.currentIndexChanged.connect(self._apply_filters)
 
         self._model_filter = QComboBox()
         self._model_filter.addItem(self.tr("All Models"))
@@ -207,6 +208,7 @@ class DeviceOverviewPage(QWidget):
         self._search_edit.setPlaceholderText(self.tr("Search by name or SN..."))
         self._search_edit.setFixedWidth(200)
         self._search_edit.setClearButtonEnabled(True)
+        self._search_edit.textChanged.connect(self._apply_filters)
 
         filter_layout.addWidget(QLabel(self.tr("Status:")))
         filter_layout.addWidget(self._status_filter)
@@ -252,14 +254,23 @@ class DeviceOverviewPage(QWidget):
         self._rebuild_grid()
 
     def update_device_status(self, device_id: int, status: DeviceStatus):
-        if device_id in self._cards:
+        if device_id not in self._cards:
+            self.add_or_update_device(device_id, status=status)
+        else:
             self._cards[device_id].set_status(status)
             self._device_data[device_id]["status"] = status
+        self._update_stats()
 
     def on_device_data_updated(self, data):
         """Called when a :class:`DeviceData` payload arrives from the DataBus."""
-        if data.device_id in self._cards:
-            self._cards[data.device_id].update_parameters(data.parameters)
+        if data.device_id not in self._cards:
+            # Auto-create card for unknown device
+            name = data.parameters.pop("_name", f"Device {data.device_id}")
+            self.add_or_update_device(
+                data.device_id, name=name,
+                status=DeviceStatus.IDLE if data.communication_ok else DeviceStatus.ALARM,
+            )
+        self._cards[data.device_id].update_parameters(data.parameters)
 
     def remove_device(self, device_id: int):
         if device_id in self._cards:
@@ -267,6 +278,8 @@ class DeviceOverviewPage(QWidget):
             self._cards[device_id].deleteLater()
             del self._cards[device_id]
             del self._device_data[device_id]
+        self._update_stats()
+        self._rebuild_grid()
 
     # --- Internals --------------------------------------------------------
 
@@ -281,8 +294,53 @@ class DeviceOverviewPage(QWidget):
         col = 0
         row = 0
         for device_id, card in sorted(self._cards.items()):
-            self._grid_layout.addWidget(card, row, col)
-            col += 1
-            if col >= max_cols:
-                col = 0
-                row += 1
+            # Apply visibility filter
+            if not self._card_matches_filter(device_id):
+                card.hide()
+            else:
+                card.show()
+                self._grid_layout.addWidget(card, row, col)
+                col += 1
+                if col >= max_cols:
+                    col = 0
+                    row += 1
+
+    def _update_stats(self):
+        """Recompute status counts for the stats bar."""
+        counts = {"online": 0, "offline": 0, "alarm": 0, "testing": 0}
+        for info in self._device_data.values():
+            status = info.get("status", DeviceStatus.OFFLINE)
+            if status == DeviceStatus.OFFLINE:
+                counts["offline"] += 1
+            elif status == DeviceStatus.ALARM or status == DeviceStatus.FAULT:
+                counts["alarm"] += 1
+            elif status == DeviceStatus.TESTING:
+                counts["testing"] += 1
+            else:
+                counts["online"] += 1
+        for name, count in counts.items():
+            self._stats_bar.update_count(name, count)
+
+    def _card_matches_filter(self, device_id: int) -> bool:
+        """Check if a device card should be visible given current filters."""
+        info = self._device_data.get(device_id, {})
+        status_filter = self._status_filter.currentText().lower()
+
+        if status_filter != "all":
+            status = info.get("status", DeviceStatus.OFFLINE)
+            if status.name.lower() != status_filter:
+                return False
+
+        search_text = self._search_edit.text().strip().lower()
+        if search_text:
+            name = info.get("name", "").lower()
+            model = info.get("model", "").lower()
+            sn = info.get("sn", "").lower()
+            if search_text not in name and search_text not in model and search_text not in sn:
+                return False
+
+        return True
+
+    def _apply_filters(self):
+        """Rebuild grid after filter/search change."""
+        self._rebuild_grid()

@@ -2,6 +2,8 @@
 
 import logging
 import os
+import platform
+import shutil
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -10,34 +12,103 @@ logger = logging.getLogger(__name__)
 _RESULT_MAP = {1: "PASSED", 2: "FAILED", 3: "INTERRUPTED", 0: "PENDING"}
 
 
+def _find_chinese_font() -> str | None:
+    """Search for a usable Chinese TTF font across platforms.
+
+    Returns the path to a .ttf file, or None if not found.
+    """
+    system = platform.system()
+    candidates = []
+
+    if system == "Windows":
+        font_dir = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
+        candidates = [
+            os.path.join(font_dir, "msyh.ttf"),      # YaHei (extracted from .ttc)
+            os.path.join(font_dir, "msyhbd.ttf"),     # YaHei Bold
+            os.path.join(font_dir, "simhei.ttf"),      # SimHei
+            os.path.join(font_dir, "simsun.ttc"),      # SimSun (ttc needs extraction)
+        ]
+    elif system == "Darwin":
+        candidates = [
+            "/System/Library/Fonts/PingFang.ttc",
+            "/System/Library/Fonts/STHeiti Light.ttc",
+            "/System/Library/Fonts/Hiragino Sans GB.ttc",
+            "/Library/Fonts/Arial Unicode.ttf",
+        ]
+    elif system == "Linux":
+        candidates = [
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+            "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+            "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+        ]
+
+    for path in candidates:
+        if os.path.isfile(path):
+            if path.lower().endswith(".ttf"):
+                return path
+            if path.lower().endswith(".ttc"):
+                extracted = _extract_ttc_to_ttf(path)
+                if extracted:
+                    return extracted
+
+    return None
+
+
+def _extract_ttc_to_ttf(ttc_path: str) -> str | None:
+    """Extract the first font from a .ttc collection to a temp .ttf file.
+
+    Uses fonttools if available, otherwise copies the file as-is
+    (fpdf2 may still be able to use it in some cases).
+    """
+    try:
+        from fontTools.ttLib import TTCollection
+    except ImportError:
+        logger.debug("fonttools not installed, cannot extract .ttc")
+        return None
+
+    try:
+        ttc = TTCollection(ttc_path)
+        if not ttc.fonts:
+            return None
+        # Extract the first font and save as .ttf
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile(suffix=".ttf", delete=False)
+        tmp.close()
+        ttc.fonts[0].save(tmp.name)
+        return tmp.name
+    except Exception as e:
+        logger.debug("Failed to extract .ttc %s: %s", ttc_path, e)
+        return None
+
+
 class PdfReportGenerator:
     """Generate PDF aging test reports for a given test_record_id."""
 
     def __init__(self):
         self._chinese_font_available = False
+        self._font_path: str | None = None
 
     def _register_font(self, pdf):
         """Try to register a Unicode font for Chinese support.
 
+        Searches common system font paths across Windows/macOS/Linux.
         Falls back to built-in Helvetica if no suitable font is found.
         Returns the font family name to use.
         """
-        # Common Windows Chinese font paths
-        font_paths = [
-            "C:/Windows/Fonts/msyh.ttc",   # Microsoft YaHei
-            "C:/Windows/Fonts/simhei.ttf",  # SimHei
-            "C:/Windows/Fonts/simsun.ttc",  # SimSun
-        ]
-        for fpath in font_paths:
-            if os.path.isfile(fpath):
-                try:
-                    pdf.add_font("chinese", "", fpath, uni=True)
-                    pdf.add_font("chinese", "B", fpath, uni=True)
-                    self._chinese_font_available = True
-                    return "chinese"
-                except Exception:
-                    logger.debug("Failed to register font: %s", fpath)
-                    continue
+        font_path = _find_chinese_font()
+        if font_path and os.path.isfile(font_path):
+            try:
+                pdf.add_font("chinese", "", font_path, uni=True)
+                pdf.add_font("chinese", "B", font_path, uni=True)
+                self._chinese_font_available = True
+                self._font_path = font_path
+                logger.info("Registered Chinese font: %s", font_path)
+                return "chinese"
+            except Exception as e:
+                logger.warning("Failed to register font %s: %s", font_path, e)
+        logger.warning("No Chinese font found; PDF will use Helvetica fallback")
         return None
 
     def _get_db(self):

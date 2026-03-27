@@ -122,6 +122,26 @@ class DatabaseManager:
     # Cleanup
     # ------------------------------------------------------------------
 
+    def reconfigure_remote(
+        self,
+        host: str,
+        port: int,
+        db_name: str,
+        user: str,
+        password: str,
+        db_type: str = "mysql",
+    ) -> bool:
+        """Reconnect to remote database with new parameters.
+
+        Disconnects the existing remote connection (if any), then
+        establishes a new one.  Used by SettingsPage for live config.
+
+        Returns:
+            True if the new connection succeeded.
+        """
+        self.remote_db.disconnect()
+        return self.connect_remote(host, port, db_name, user, password, db_type)
+
     def cleanup(self) -> None:
         """Stop sync, close connections, reset singleton."""
         self.stop_sync()

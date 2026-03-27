@@ -78,14 +78,27 @@ class SettingsPage(QWidget):
         self._db_port_spin.setValue(3306)
         self._db_name_edit = QLineEdit("sigenpro_aging")
         self._db_user_edit = QLineEdit("root")
+        self._db_type_combo = QComboBox()
+        self._db_type_combo.addItem("MySQL", "mysql")
+        self._db_type_combo.addItem("PostgreSQL", "postgresql")
+
         self._db_pass_edit = QLineEdit()
         self._db_pass_edit.setEchoMode(QLineEdit.EchoMode.Password)
 
+        self._db_status_label = QLabel("")
+
+        db_form.addRow(self.tr("Type:"), self._db_type_combo)
         db_form.addRow(self.tr("Host:"), self._db_host_edit)
         db_form.addRow(self.tr("Port:"), self._db_port_spin)
         db_form.addRow(self.tr("Database:"), self._db_name_edit)
         db_form.addRow(self.tr("Username:"), self._db_user_edit)
         db_form.addRow(self.tr("Password:"), self._db_pass_edit)
+        db_form.addRow(self.tr("Status:"), self._db_status_label)
+
+        # Test connection button
+        self._test_db_btn = QPushButton(self.tr("Test Connection"))
+        self._test_db_btn.clicked.connect(self._on_test_db_connection)
+        db_form.addRow("", self._test_db_btn)
 
         main_layout.addWidget(db_group)
 
@@ -164,6 +177,11 @@ class SettingsPage(QWidget):
                 break
 
         # Database
+        db_type = settings.value("db/type", "mysql", type=str)
+        for i in range(self._db_type_combo.count()):
+            if self._db_type_combo.itemData(i) == db_type:
+                self._db_type_combo.setCurrentIndex(i)
+                break
         self._db_host_edit.setText(settings.value("db/host", "localhost", type=str))
         self._db_port_spin.setValue(settings.value("db/port", 3306, type=int))
         self._db_name_edit.setText(settings.value("db/name", "sigenpro_aging", type=str))
@@ -184,8 +202,9 @@ class SettingsPage(QWidget):
         )
 
     def _on_save(self):
-        """Persist current widget values to QSettings."""
+        """Persist current widget values to QSettings and apply DB config."""
         from PyQt6.QtCore import QSettings
+        from ..storage.database_manager import DatabaseManager
 
         settings = QSettings()
 
@@ -196,11 +215,34 @@ class SettingsPage(QWidget):
             settings.setValue("language", self._language_combo.currentData())
 
         # Database
+        db_type = self._db_type_combo.currentData() or "mysql"
+        settings.setValue("db/type", db_type)
         settings.setValue("db/host", self._db_host_edit.text())
         settings.setValue("db/port", self._db_port_spin.value())
         settings.setValue("db/name", self._db_name_edit.text())
         settings.setValue("db/user", self._db_user_edit.text())
         settings.setValue("db/password", self._db_pass_edit.text())
+
+        # Live-apply remote database configuration
+        dbm = DatabaseManager.instance()
+        try:
+            ok = dbm.reconfigure_remote(
+                host=self._db_host_edit.text(),
+                port=self._db_port_spin.value(),
+                db_name=self._db_name_edit.text(),
+                user=self._db_user_edit.text(),
+                password=self._db_pass_edit.text(),
+                db_type=db_type,
+            )
+            self._db_status_label.setText(
+                self.tr("Connected") if ok else self.tr("Connection failed")
+            )
+            self._db_status_label.setStyleSheet(
+                "color: green;" if ok else "color: red;"
+            )
+        except Exception as e:
+            self._db_status_label.setText(self.tr("Error: %1").arg(str(e)))
+            self._db_status_label.setStyleSheet("color: red;")
 
         # Data retention
         settings.setValue("retention_days", self._retention_days_spin.value())
@@ -227,3 +269,27 @@ class SettingsPage(QWidget):
         locale = self._language_combo.currentData()
         if locale:
             self._lang_mgr.switch_language(locale)
+
+    def _on_test_db_connection(self):
+        """Test the remote database connection without saving."""
+        from ..storage.database_manager import DatabaseManager
+
+        dbm = DatabaseManager.instance()
+        try:
+            ok = dbm.reconfigure_remote(
+                host=self._db_host_edit.text(),
+                port=self._db_port_spin.value(),
+                db_name=self._db_name_edit.text(),
+                user=self._db_user_edit.text(),
+                password=self._db_pass_edit.text(),
+                db_type=self._db_type_combo.currentData() or "mysql",
+            )
+            if ok:
+                self._db_status_label.setText(self.tr("Connection successful"))
+                self._db_status_label.setStyleSheet("color: green;")
+            else:
+                self._db_status_label.setText(self.tr("Connection failed"))
+                self._db_status_label.setStyleSheet("color: red;")
+        except Exception as e:
+            self._db_status_label.setText(self.tr("Error: %1").arg(str(e)))
+            self._db_status_label.setStyleSheet("color: red;")
