@@ -11,6 +11,12 @@ TRANSLATIONS = {
     "Fault": "Fault",
     "Unknown": "Unknown",
 
+    # --- Stats bar tooltips ---
+    "Connected and idle, ready to start aging test": "Connected and idle, ready to start aging test",
+    "Device not connected or communication interrupted": "Device not connected or communication interrupted",
+    "Active alarm present, needs attention": "Active alarm present, needs attention",
+    "Aging test in progress": "Aging test in progress",
+
     # --- Main Window ---
     "SigenPro Aging Monitor": "SigenPro Aging Monitor",
     "Device Overview": "Device Overview",

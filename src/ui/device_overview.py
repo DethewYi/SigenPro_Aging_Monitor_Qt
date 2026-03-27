@@ -20,7 +20,19 @@ from ..core.common.types import DeviceStatus
 # ---------------------------------------------------------------------------
 
 class StatsBarWidget(QWidget):
-    """Horizontal bar of status-count cards (Online / Offline / Alarm / Testing)."""
+    """Horizontal bar of status-count cards (Online / Offline / Alarm / Testing).
+
+    Each card shows a translated label + large count number so that
+    production-line workers can immediately understand the meaning.
+    """
+
+    # Tooltip descriptions (keyed by English status, shown via tr())
+    _TOOLTIP_KEYS = {
+        "Online": "Connected and idle, ready to start aging test",
+        "Offline": "Device not connected or communication interrupted",
+        "Alarm": "Active alarm present, needs attention",
+        "Testing": "Aging test in progress",
+    }
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -36,29 +48,52 @@ class StatsBarWidget(QWidget):
             ("Testing", "#a6e3a1"),
         ]
         for name, color in configs:
-            card = QLabel("0")
-            card.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            card.setProperty("label", name)
-            card.setStyleSheet(
-                f"""
-                QLabel {{
-                    background-color: #313244;
-                    border-left: 4px solid {color};
-                    border-radius: 6px;
-                    padding: 12px;
-                    font-size: 24px;
-                    font-weight: bold;
-                    color: {color};
-                }}
-                """
-            )
+            card = self._make_card(name, color)
             layout.addWidget(card)
             self._counts[name.lower()] = card
+
+    def _make_card(self, name: str, color: str) -> QLabel:
+        """Build a single stat card with label + number."""
+        label_text = self.tr(name)
+        tooltip_key = self._TOOLTIP_KEYS.get(name, "")
+        tooltip = self.tr(tooltip_key) if tooltip_key else ""
+        card = QLabel(f"0")
+        card.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card.setProperty("label", name)
+        card.setProperty("number", 0)
+        card.setToolTip(tooltip)
+        card.setStyleSheet(
+            f"""
+            QLabel {{
+                background-color: #313244;
+                border-left: 4px solid {color};
+                border-radius: 6px;
+                padding: 8px 16px;
+            }}
+            QLabel[label] {{
+                font-size: 13px;
+                color: #a6adc8;
+            }}
+            QLabel[number] {{
+                font-size: 13px;
+            }}
+            """
+        )
+        self._refresh_card_text(card, label_text, 0)
+        return card
+
+    @staticmethod
+    def _refresh_card_text(card: QLabel, label_text: str, count: int):
+        card.setText(f"{label_text}\n{count}")
+        card.setProperty("number", count)
 
     def update_count(self, name: str, count: int):
         card = self._counts.get(name.lower())
         if card:
-            card.setText(str(count))
+            # The label key is stored in the 'label' property (original English)
+            label_key = card.property("label") or name.capitalize()
+            label_text = self.tr(label_key)
+            self._refresh_card_text(card, label_text, count)
 
 
 # ---------------------------------------------------------------------------

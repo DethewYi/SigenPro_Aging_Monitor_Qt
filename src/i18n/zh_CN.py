@@ -11,6 +11,12 @@ TRANSLATIONS = {
     "Fault": "故障",
     "Unknown": "未知",
 
+    # --- Stats bar tooltips ---
+    "Connected and idle, ready to start aging test": "已连接且空闲，可随时启动老化测试",
+    "Device not connected or communication interrupted": "设备未连接或通信中断",
+    "Active alarm present, needs attention": "当前存在告警，需关注处理",
+    "Aging test in progress": "正在执行老化测试中",
+
     # --- Main Window ---
     "SigenPro Aging Monitor": "SigenPro 老化监控系统",
     "Device Overview": "设备总览",
