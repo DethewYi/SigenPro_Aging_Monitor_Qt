@@ -81,10 +81,9 @@ class TemplateConfigPage(QWidget):
         self._detail_label.setWordWrap(True)
         self._detail_label.setTextFormat(Qt.TextFormat.RichText)
         self._detail_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        self._detail_label.setProperty("class", "detail-panel")
         self._detail_label.setStyleSheet(
             "padding: 8px; border: 1px solid palette(mid); "
-            "background-color: palette(base); "
+            "background-color: transparent; "
             "border-radius: 4px; font-size: 13px;"
         )
         right_layout.addWidget(self._detail_label)
