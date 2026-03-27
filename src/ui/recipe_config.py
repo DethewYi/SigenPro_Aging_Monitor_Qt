@@ -217,7 +217,7 @@ class RecipeConfigPage(QWidget):
             html += f"<h4>{self.tr('Phases')}</h4>"
             html += (
                 "<table cellpadding='3' style='font-size: 13px;'>"
-                "<tr style='background:#e0e0e0;'>"
+                "<tr style='background:rgba(255,255,255,0.08);'>"
                 f"<th>#</th><th>{self.tr('Name')}</th><th>{self.tr('Duration')}</th>"
                 f"<th>{self.tr('Voltage (V)')}</th><th>{self.tr('Current (A)')}</th>"
                 f"<th>{self.tr('Power Limit (W)')}</th>"

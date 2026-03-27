@@ -81,8 +81,10 @@ class TemplateConfigPage(QWidget):
         self._detail_label.setWordWrap(True)
         self._detail_label.setTextFormat(Qt.TextFormat.RichText)
         self._detail_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self._detail_label.setProperty("class", "detail-panel")
         self._detail_label.setStyleSheet(
-            "padding: 8px; background-color: #f5f5f5; border: 1px solid #ddd; "
+            "padding: 8px; border: 1px solid palette(mid); "
+            "background-color: palette(base); "
             "border-radius: 4px; font-size: 13px;"
         )
         right_layout.addWidget(self._detail_label)
@@ -177,7 +179,7 @@ class TemplateConfigPage(QWidget):
         if collect:
             html += f"<h4>{self.tr('Collection Parameters')}</h4>"
             html += "<table cellpadding='3' style='font-size: 13px;'>"
-            html += f"<tr style='background:#e0e0e0;'><th>{self.tr('Parameter')}</th><th>{self.tr('Frequency (Hz)')}</th></tr>"
+            html += f"<tr style='background:rgba(255,255,255,0.08);'><th>{self.tr('Parameter')}</th><th>{self.tr('Frequency (Hz)')}</th></tr>"
             for pname, freq in collect.items():
                 html += f"<tr><td>{pname}</td><td>{freq}</td></tr>"
             html += "</table>"
@@ -188,7 +190,7 @@ class TemplateConfigPage(QWidget):
             html += f"<h4>{self.tr('Default Thresholds')}</h4>"
             html += "<table cellpadding='3' style='font-size: 13px;'>"
             html += (
-                f"<tr style='background:#e0e0e0;'>"
+                f"<tr style='background:rgba(255,255,255,0.08);'>"
                 f"<th>{self.tr('Parameter')}</th>"
                 f"<th>{self.tr('Lower')}</th>"
                 f"<th>{self.tr('Upper')}</th>"
