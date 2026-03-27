@@ -67,17 +67,22 @@ class Application(QApplication):
         self._initialize_communication()
 
         # ------------------------------------------------------------------
-        # 7. Main window & UI pages
+        # 7. Simulation (MVP demo mode)
+        # ------------------------------------------------------------------
+        self._initialize_simulation()
+
+        # ------------------------------------------------------------------
+        # 8. Main window & UI pages
         # ------------------------------------------------------------------
         self._initialize_main_window()
 
         # ------------------------------------------------------------------
-        # 8. Wire DataBus signals to UI
+        # 9. Wire DataBus signals to UI
         # ------------------------------------------------------------------
         self._wire_ui_connections()
 
         # ------------------------------------------------------------------
-        # 9. Apply saved theme / language
+        # 10. Apply saved theme / language
         # ------------------------------------------------------------------
         self._initialize_theme()
         self._initialize_language()
@@ -150,8 +155,10 @@ class Application(QApplication):
         self._tcp_manager.device_status_changed.connect(
             lambda did, status: DataBus.instance().publish_device_status(did, status))
 
-        # Wire barcode -> status bar (deferred to _wire_ui_connections
-        # because main window does not exist yet)
+    def _initialize_simulation(self):
+        from ..simulation.simulator import Simulator
+        self._simulator = Simulator(self)
+        self._simulator.start_sim()
 
     def _initialize_main_window(self):
         from ..ui.main_window import MainWindow

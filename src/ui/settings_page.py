@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QApplication,
+    QCheckBox,
 )
 from PyQt6.QtCore import Qt
 
@@ -33,6 +34,7 @@ class SettingsPage(QWidget):
 
         self._setup_ui()
         self._load_current_settings()
+        self._sync_sim_checkbox()
 
     # ------------------------------------------------------------------
     # UI construction
@@ -135,6 +137,12 @@ class SettingsPage(QWidget):
 
         comm_form.addRow(self.tr("Timeout:"), self._comm_timeout_spin)
         comm_form.addRow(self.tr("Retry count:"), self._retry_count_spin)
+
+        self._sim_check = QCheckBox(self.tr("Simulation Mode"))
+        self._sim_check.setToolTip(
+            self.tr("Enable built-in device data simulator for demo / testing")
+        )
+        comm_form.addRow(self._sim_check)
 
         main_layout.addWidget(comm_group)
 
@@ -293,3 +301,37 @@ class SettingsPage(QWidget):
         except Exception as e:
             self._db_status_label.setText(self.tr("Error: %1").arg(str(e)))
             self._db_status_label.setStyleSheet("color: red;")
+
+    def _sync_sim_checkbox(self):
+        """Sync the simulation checkbox with the running Simulator state."""
+        self._sim_check.blockSignals(True)
+        try:
+            from PyQt6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app and hasattr(app, '_simulator'):
+                self._sim_check.setChecked(app._simulator.is_running)
+                app._simulator.simulation_changed.connect(self._on_sim_state_changed)
+                self._sim_check.toggled.connect(self._on_sim_toggled)
+        except Exception:
+            pass
+        finally:
+            self._sim_check.blockSignals(False)
+
+    def _on_sim_toggled(self, checked: bool):
+        """Toggle simulation on/off from the checkbox."""
+        try:
+            from PyQt6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app and hasattr(app, '_simulator'):
+                if checked and not app._simulator.is_running:
+                    app._simulator.start_sim()
+                elif not checked and app._simulator.is_running:
+                    app._simulator.stop_sim()
+        except Exception as e:
+            self._sim_check.setChecked(not checked)
+
+    def _on_sim_state_changed(self, running: bool):
+        """Update checkbox when simulation state changes externally."""
+        self._sim_check.blockSignals(True)
+        self._sim_check.setChecked(running)
+        self._sim_check.blockSignals(False)
