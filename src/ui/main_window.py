@@ -254,6 +254,11 @@ class MainWindow(QMainWindow):
         self._template_config_page = TemplateConfigPage()
         self.set_page(self.PAGE_TEMPLATE_MGMT, self._template_config_page)
 
+        # --- Settings page (PAGE_SETTINGS = 5) ---
+        from .settings_page import SettingsPage
+        self._settings_page = SettingsPage()
+        self.set_page(self.PAGE_SETTINGS, self._settings_page)
+
         # --- Wire cross-page navigation ---
 
         # Device Overview -> Device Detail
