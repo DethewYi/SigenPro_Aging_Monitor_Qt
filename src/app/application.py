@@ -127,6 +127,8 @@ class Application(QApplication):
         from ..core.alarm_engine import AlarmEngine
         from ..core.template_manager import TemplateManager
         from ..core.test_engine import TestEngine
+        from ..core.recipe_manager import RecipeManager
+        from ..core.recipe_executor import RecipeExecutor
 
         self._alarm_engine = AlarmEngine(self)
         self._template_manager = TemplateManager(self)
@@ -135,13 +137,25 @@ class Application(QApplication):
         self._test_engine.set_alarm_engine(self._alarm_engine)
         self._test_engine.set_template_manager(self._template_manager)
 
+        self._recipe_manager = RecipeManager(self)
+        self._recipe_manager.load_recipes()
+
+        self._recipe_executor = RecipeExecutor(self)
+        self._recipe_executor.set_alarm_engine(self._alarm_engine)
+        self._recipe_executor.set_recipe_manager(self._recipe_manager)
+
     def _initialize_instruments(self):
         from ..instrument.channel_manager import ChannelManager
         from ..instrument.barcode_scanner import BarcodeScanner
 
         self._channel_manager = ChannelManager(self)
         self._channel_manager.load_channels()
+        self._channel_manager.set_plugin_manager(self._plugin_manager)
         self._barcode_scanner = BarcodeScanner(self)
+
+        # Inject channel manager into recipe executor
+        if hasattr(self, '_recipe_executor'):
+            self._recipe_executor.set_channel_manager(self._channel_manager)
 
     def _initialize_communication(self):
         from ..communication.tcp_manager import TcpConnectionManager
@@ -184,6 +198,13 @@ class Application(QApplication):
         # Wire alarm engine -> test engine (mark has_alarm)
         DataBus.instance().alarm_triggered.connect(self._on_alarm_for_test)
 
+        # Wire DataBus alarm -> recipe executor (emergency stop)
+        DataBus.instance().alarm_triggered.connect(
+            self._recipe_executor.on_alarm_triggered)
+
+        # Wire recipe executor -> logging
+        self._recipe_executor.recipe_completed.connect(self._on_recipe_completed)
+
     def _initialize_theme(self):
         from .theme_manager import ThemeManager
 
@@ -218,6 +239,63 @@ class Application(QApplication):
         if alarm and hasattr(alarm, 'device_id'):
             self._test_engine.set_has_alarm(alarm.device_id)
 
+    def _on_recipe_completed(self, channel_id, result):
+        from ..core.common.types import TestResult
+        if result == TestResult.PASSED:
+            logger.info("Recipe completed on channel %d", channel_id)
+        elif result == TestResult.FAILED:
+            logger.warning("Recipe failed (alarm) on channel %d", channel_id)
+        else:
+            logger.info("Recipe interrupted on channel %d", channel_id)
+
+    def _on_device_start(self, device_id: int):
+        """Handle device start: run simulator + try to start recipe if matched."""
+        self._simulator.set_running(device_id, True)
+        # Try to find and start a recipe by matching channel's bound_pn
+        ch = self._channel_manager.channel_info(device_id)
+        recipe = None
+        if ch and ch.bound_pn:
+            recipe = self._recipe_manager.get_recipe_by_pn(ch.bound_pn)
+        if recipe:
+            self._recipe_executor.start_recipe(device_id, recipe.recipe_id)
+            logger.info("Auto-started recipe '%s' (PN: %s) for device %d",
+                        recipe.name, ch.bound_pn if ch else "?", device_id)
+        else:
+            logger.debug("No recipe found for device %d, running in simulation mode", device_id)
+
+    def _on_device_stop(self, device_id: int):
+        """Handle device stop: stop simulator + stop recipe if running."""
+        self._simulator.set_running(device_id, False)
+        if self._recipe_executor.is_running(device_id):
+            self._recipe_executor.stop_recipe(device_id)
+
+    def _on_phase_progress(self, channel_id, phase_idx, elapsed_s, duration_s):
+        """Update card with current phase remaining time."""
+        remaining = max(0, duration_s - elapsed_s)
+        phase_name = self._recipe_executor.current_phase_name(channel_id)
+        card = self._device_overview_page._cards.get(channel_id)
+        if card:
+            card.set_phase_info(phase_name, remaining)
+
+    def _on_phase_changed(self, channel_id, phase_idx, total_phases):
+        """Update card when a new phase begins."""
+        phase_name = self._recipe_executor.current_phase_name(channel_id)
+        card = self._device_overview_page._cards.get(channel_id)
+        if card:
+            recipe = self._recipe_executor.active_recipe(channel_id)
+            remaining = 0
+            if recipe and 0 <= phase_idx < len(recipe.phases):
+                remaining = recipe.phases[phase_idx].duration_minutes * 60
+            card.set_phase_info(phase_name, remaining)
+            logger.info("Channel %d entered phase %d/%d: %s",
+                        channel_id, phase_idx + 1, total_phases, phase_name)
+
+    def _on_recipe_card_update(self, channel_id, result):
+        """Clear phase info from card when recipe completes."""
+        card = self._device_overview_page._cards.get(channel_id)
+        if card:
+            card.set_phase_info("", 0)
+
     # ------------------------------------------------------------------
     # DataBus -> UI wiring
     # ------------------------------------------------------------------
@@ -241,9 +319,15 @@ class Application(QApplication):
         self._device_overview_page.all_stopped.connect(
             lambda: self._simulator.set_all_running(False))
         self._device_overview_page.device_start_clicked.connect(
-            lambda did: self._simulator.set_running(did, True))
+            self._on_device_start)
         self._device_overview_page.device_stop_clicked.connect(
-            lambda did: self._simulator.set_running(did, False))
+            self._on_device_stop)
+
+        # Recipe executor -> Overview cards (phase progress display)
+        self._recipe_executor.phase_progress.connect(self._on_phase_progress)
+        self._recipe_executor.phase_changed.connect(self._on_phase_changed)
+        self._recipe_executor.recipe_completed.connect(
+            self._on_recipe_card_update)
 
         # DataBus -> Alarm Panel
         DataBus.instance().alarm_triggered.connect(self._on_alarm_triggered)

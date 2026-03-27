@@ -25,6 +25,7 @@ class MainWindow(QMainWindow):
     PAGE_DATA_QUERY = 3
     PAGE_TEMPLATE_MGMT = 4
     PAGE_SETTINGS = 5
+    PAGE_RECIPE_MGMT = 6
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -102,6 +103,7 @@ class MainWindow(QMainWindow):
         # Bottom navigation (Template Mgmt, Settings) — non-exclusive
         bottom_pages = [
             ("Template Mgmt", self.PAGE_TEMPLATE_MGMT),
+            ("Recipe Mgmt", self.PAGE_RECIPE_MGMT),
             ("Settings", self.PAGE_SETTINGS),
         ]
         for text, idx in bottom_pages:
@@ -184,6 +186,7 @@ class MainWindow(QMainWindow):
             self.tr("Data Query"),        # PAGE_DATA_QUERY
             self.tr("Template Management"),  # PAGE_TEMPLATE_MGMT
             self.tr("Settings"),          # PAGE_SETTINGS
+            self.tr("Recipe Management"),  # PAGE_RECIPE_MGMT
         ]
         for text in placeholder_labels:
             label = QLabel(text)
@@ -258,6 +261,11 @@ class MainWindow(QMainWindow):
         from .settings_page import SettingsPage
         self._settings_page = SettingsPage()
         self.set_page(self.PAGE_SETTINGS, self._settings_page)
+
+        # --- Recipe Management page (PAGE_RECIPE_MGMT = 6) ---
+        from .recipe_config import RecipeConfigPage
+        self._recipe_config_page = RecipeConfigPage()
+        self.set_page(self.PAGE_RECIPE_MGMT, self._recipe_config_page)
 
         # --- Wire cross-page navigation ---
 

@@ -217,6 +217,71 @@ class ChannelManager(QObject):
         logger.warning("Emergency stop all channels")
 
     # ------------------------------------------------------------------
+    # Controller access (for RecipeExecutor)
+    # ------------------------------------------------------------------
+
+    def get_power_controller(self, channel_id: int):
+        """Return the power supply controller for *channel_id*, or None."""
+        return self._power_controllers.get(channel_id)
+
+    def get_contactor_controller(self, channel_id: int):
+        """Return the contactor controller for *channel_id*, or None."""
+        return self._contactor_controllers.get(channel_id)
+
+    def execute_relay_action(self, channel_id: int, relay_id: int, action: str) -> bool:
+        """Execute a single relay action on the channel's contactor controller.
+
+        Args:
+            channel_id: Channel identifier.
+            relay_id: Coil number on the contactor controller.
+            action: ``"CLOSE"`` or ``"OPEN"``.
+        """
+        ch = self._channels.get(channel_id)
+        if not ch:
+            return False
+        ctrl = self._contactor_controllers.get(channel_id)
+        if not ctrl:
+            ctrl = self._init_controller(ch, "contactor")
+            if ctrl:
+                self._contactor_controllers[channel_id] = ctrl
+        if not ctrl:
+            logger.warning(
+                "No contactor controller for channel %d, relay action skipped",
+                channel_id,
+            )
+            return False
+        try:
+            if action.upper() == "CLOSE":
+                ctrl.power_on(relay_id)
+            else:
+                ctrl.power_off(relay_id)
+            return True
+        except Exception as e:
+            logger.error("Relay action failed ch%d relay%d: %s", channel_id, relay_id, e)
+            return False
+
+    def set_channel_output(self, channel_id: int, voltage: float, current: float) -> bool:
+        """Set voltage and current on the channel's power supply controller."""
+        ch = self._channels.get(channel_id)
+        if not ch:
+            return False
+        ctrl = self._power_controllers.get(channel_id)
+        if not ctrl:
+            ctrl = self._init_controller(ch, "power")
+            if ctrl:
+                self._power_controllers[channel_id] = ctrl
+        if not ctrl:
+            logger.warning("No power controller for channel %d", channel_id)
+            return False
+        try:
+            ctrl.set_voltage(ch.power_channel, voltage)
+            ctrl.set_current(ch.power_channel, current)
+            return True
+        except Exception as e:
+            logger.error("Set output failed ch%d: %s", channel_id, e)
+            return False
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 

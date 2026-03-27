@@ -89,6 +89,19 @@ class LocalDatabase:
                 phases            TEXT DEFAULT '[]'
             );
 
+            CREATE TABLE IF NOT EXISTS aging_recipes (
+                recipe_id          INTEGER PRIMARY KEY,
+                name               TEXT NOT NULL,
+                product_pn         TEXT NOT NULL UNIQUE,
+                max_total_minutes  INTEGER DEFAULT 0,
+                collect_params     TEXT DEFAULT '{}',
+                default_thresholds TEXT DEFAULT '{}',
+                phases             TEXT DEFAULT '[]',
+                event_actions      TEXT DEFAULT '{}',
+                created_at         TEXT DEFAULT '',
+                updated_at         TEXT DEFAULT ''
+            );
+
             CREATE TABLE IF NOT EXISTS test_records (
                 record_id     INTEGER PRIMARY KEY AUTOINCREMENT,
                 template_id   INTEGER,
@@ -573,6 +586,150 @@ class LocalDatabase:
         )
         self._conn.commit()
         return True
+
+    # ------------------------------------------------------------------
+    # Aging recipes
+    # ------------------------------------------------------------------
+
+    def save_recipe(self, recipe: dict) -> int:
+        """Save (insert or update) an aging recipe."""
+        phases_json = json.dumps(recipe.get("phases", []), ensure_ascii=False, default=str)
+        event_json = json.dumps(recipe.get("event_actions", {}), ensure_ascii=False, default=str)
+        thresholds_json = json.dumps(
+            recipe.get("default_thresholds", {}), ensure_ascii=False, default=str
+        )
+        collect_json = json.dumps(recipe.get("collect_params", {}), ensure_ascii=False)
+        now = datetime.now().isoformat()
+
+        if recipe.get("recipe_id", -1) > 0:
+            rid = recipe["recipe_id"]
+            self._conn.execute(
+                "UPDATE aging_recipes SET name=?, product_pn=?, max_total_minutes=?, "
+                "collect_params=?, default_thresholds=?, phases=?, event_actions=?, "
+                "updated_at=? WHERE recipe_id=?",
+                (
+                    recipe.get("name", ""),
+                    recipe.get("product_pn", ""),
+                    recipe.get("max_total_minutes", 0),
+                    collect_json,
+                    thresholds_json,
+                    phases_json,
+                    event_json,
+                    now,
+                    rid,
+                ),
+            )
+            self._conn.commit()
+            return rid
+        else:
+            cur = self._conn.execute(
+                "INSERT INTO aging_recipes (name, product_pn, max_total_minutes, "
+                "collect_params, default_thresholds, phases, event_actions, "
+                "created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    recipe.get("name", ""),
+                    recipe.get("product_pn", ""),
+                    recipe.get("max_total_minutes", 0),
+                    collect_json,
+                    thresholds_json,
+                    phases_json,
+                    event_json,
+                    now,
+                    now,
+                ),
+            )
+            self._conn.commit()
+            return cur.lastrowid
+
+    def load_all_recipes(self) -> list[dict]:
+        """Load all aging recipes, deserializing JSON fields."""
+        rows = self._conn.execute(
+            "SELECT recipe_id, name, product_pn, max_total_minutes, collect_params, "
+            "default_thresholds, phases, event_actions, created_at, updated_at "
+            "FROM aging_recipes ORDER BY recipe_id"
+        ).fetchall()
+        results: list[dict] = []
+        for r in rows:
+            phases = self._parse_json(r[6], [])
+            event_actions = self._parse_json(r[7], {})
+            thresholds = self._parse_json(r[5], {})
+            collect = self._parse_json(r[4], {})
+            results.append({
+                "recipe_id": r[0],
+                "name": r[1],
+                "product_pn": r[2],
+                "max_total_minutes": r[3],
+                "collect_params": collect,
+                "default_thresholds": thresholds,
+                "phases": phases,
+                "event_actions": event_actions,
+                "created_at": r[8] or "",
+                "updated_at": r[9] or "",
+            })
+        return results
+
+    def load_recipe_by_id(self, recipe_id: int) -> dict | None:
+        """Load a single aging recipe by ID."""
+        row = self._conn.execute(
+            "SELECT recipe_id, name, product_pn, max_total_minutes, collect_params, "
+            "default_thresholds, phases, event_actions, created_at, updated_at "
+            "FROM aging_recipes WHERE recipe_id=?",
+            (recipe_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return {
+            "recipe_id": row[0],
+            "name": row[1],
+            "product_pn": row[2],
+            "max_total_minutes": row[3],
+            "collect_params": self._parse_json(row[4], {}),
+            "default_thresholds": self._parse_json(row[5], {}),
+            "phases": self._parse_json(row[6], []),
+            "event_actions": self._parse_json(row[7], {}),
+            "created_at": row[8] or "",
+            "updated_at": row[9] or "",
+        }
+
+    def load_recipe_by_pn(self, product_pn: str) -> dict | None:
+        """Load a single aging recipe by product PN."""
+        row = self._conn.execute(
+            "SELECT recipe_id, name, product_pn, max_total_minutes, collect_params, "
+            "default_thresholds, phases, event_actions, created_at, updated_at "
+            "FROM aging_recipes WHERE product_pn=?",
+            (product_pn,),
+        ).fetchone()
+        if row is None:
+            return None
+        return {
+            "recipe_id": row[0],
+            "name": row[1],
+            "product_pn": row[2],
+            "max_total_minutes": row[3],
+            "collect_params": self._parse_json(row[4], {}),
+            "default_thresholds": self._parse_json(row[5], {}),
+            "phases": self._parse_json(row[6], []),
+            "event_actions": self._parse_json(row[7], {}),
+            "created_at": row[8] or "",
+            "updated_at": row[9] or "",
+        }
+
+    def delete_recipe(self, recipe_id: int) -> bool:
+        """Delete an aging recipe by ID."""
+        self._conn.execute(
+            "DELETE FROM aging_recipes WHERE recipe_id=?", (recipe_id,)
+        )
+        self._conn.commit()
+        return True
+
+    def _parse_json(self, text: str | None, default):
+        """Safely parse JSON text, returning *default* on failure."""
+        if not text:
+            return default
+        try:
+            return json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            return default
 
     # ------------------------------------------------------------------
     # Cleanup

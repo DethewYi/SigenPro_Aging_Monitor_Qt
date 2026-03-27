@@ -31,6 +31,11 @@ class CommunicationType(Enum):
     RS485 = auto()
 
 
+class RelayActionType(Enum):
+    OPEN = auto()
+    CLOSE = auto()
+
+
 @dataclass
 class DeviceConfig:
     device_id: int = -1

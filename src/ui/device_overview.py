@@ -125,6 +125,13 @@ class DeviceCardWidget(QWidget):
         self._params_label.setStyleSheet("font-size: 11px;")
         layout.addWidget(self._params_label)
 
+        # Phase info (recipe execution progress)
+        self._phase_label = QLabel("")
+        self._phase_label.setStyleSheet(
+            "color: #a6e3a1; font-size: 11px; font-weight: bold;"
+        )
+        layout.addWidget(self._phase_label)
+
         # Control buttons
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(0, 4, 0, 0)
@@ -167,6 +174,20 @@ class DeviceCardWidget(QWidget):
         ``key: value`` joined by ``|``, capped at 3 entries."""
         parts = [f"{k}: {v:.1f}" for k, v in params.items()]
         self._params_label.setText(" | ".join(parts[:3]) if parts else "--")
+
+    def set_phase_info(self, phase_name: str, remaining: int = 0):
+        """Show current phase name and remaining time on the card."""
+        if phase_name:
+            hrs = remaining // 3600
+            mins = (remaining % 3600) // 60
+            secs = remaining % 60
+            if hrs > 0:
+                time_str = f"{hrs}:{mins:02d}:{secs:02d}"
+            else:
+                time_str = f"{mins}:{secs:02d}"
+            self._phase_label.setText(f"{phase_name}  [{time_str}]")
+        else:
+            self._phase_label.setText("")
 
     # --- Button slots (stop propagation to avoid card click) ---------------
 
