@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QMenu,
     QButtonGroup,
     QApplication,
+    QMessageBox,
 )
 from PyQt6.QtCore import Qt, QEvent
 
@@ -206,6 +207,9 @@ class MainWindow(QMainWindow):
             lambda: self._content_stack.setCurrentIndex(self.PAGE_TEMPLATE_MGMT),
         )
 
+        help_menu = menu_bar.addMenu(self.tr("&Help"))
+        help_menu.addAction(self.tr("&About"), self._show_about)
+
     def _setup_content_area(self):
         self._content_stack = QStackedWidget(self)
 
@@ -325,3 +329,43 @@ class MainWindow(QMainWindow):
             return
         self._device_detail_page.set_device(device_id)
         self.navigate_to(self.PAGE_DEVICE_DETAIL)
+
+    def _show_about(self):
+        """Show the About dialog with version, author and feature summary."""
+        QMessageBox.about(
+            self,
+            self.tr("About SigenPro Aging Monitor"),
+            self.tr(
+                "<h3>SigenPro Aging Monitor</h3>"
+                "<p>Version {version}</p>"
+                "<hr/>"
+                "<p><b>{author}</b></p>"
+                "<p>{desc}</p>"
+                "<p><b>{features}</b></p>"
+                "<ul>"
+                "<li>{f1}</li>"
+                "<li>{f2}</li>"
+                "<li>{f3}</li>"
+                "<li>{f4}</li>"
+                "<li>{f5}</li>"
+                "<li>{f6}</li>"
+                "<li>{f7}</li>"
+                "<li>{f8}</li>"
+                "</ul>"
+                "<p><b>{tech}</b> Python / PyQt6</p>"
+            ).format(
+                version="1.2.0",
+                author="SigenPro",
+                desc=self.tr("Energy storage product aging test monitoring system"),
+                features=self.tr("Features"),
+                f1=self.tr("Multi-channel device overview with real-time status"),
+                f2=self.tr("Multi-phase aging recipe system with power & relay control"),
+                f3=self.tr("Real-time alarm engine with threshold evaluation"),
+                f4=self.tr("Curve charts and historical data query"),
+                f5=self.tr("Template and recipe management with JSON import/export"),
+                f6=self.tr("CSV / Excel / PDF report generation"),
+                f7=self.tr("8 color themes and Chinese/English i18n"),
+                f8=self.tr("TCP / CAN / RS485 communication with plugin architecture"),
+                tech=self.tr("Built with"),
+            ),
+        )
