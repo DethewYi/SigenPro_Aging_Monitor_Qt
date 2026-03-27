@@ -10,6 +10,10 @@ class ThemeManager(QObject):
     LIGHT = 1
     INDUSTRIAL = 2
     HIGH_CONTRAST = 3
+    OCEAN = 4
+    FOREST = 5
+    SUNSET = 6
+    PURPLE = 7
 
     _instance = None
 
@@ -26,7 +30,8 @@ class ThemeManager(QObject):
     def apply_theme(self, theme_id):
         """Apply a theme by its integer ID and persist the choice in QSettings."""
         self._current_theme = theme_id
-        theme_names = ["dark", "light", "industrial", "highcontrast"]
+        theme_names = ["dark", "light", "industrial", "highcontrast",
+                       "ocean", "forest", "sunset", "purple"]
         qss_path = f":/themes/{theme_names[theme_id]}.qss"
 
         # Try Qt resource first, then file system
@@ -56,9 +61,11 @@ class ThemeManager(QObject):
 
     @staticmethod
     def available_themes():
-        return ["Dark", "Light", "Industrial", "High Contrast"]
+        return ["Dark", "Light", "Industrial", "High Contrast",
+                "Ocean Blue", "Forest Green", "Sunset Orange", "Royal Purple"]
 
     @staticmethod
     def theme_id_to_name(theme_id):
-        names = {0: "dark", 1: "light", 2: "industrial", 3: "highcontrast"}
+        names = {0: "dark", 1: "light", 2: "industrial", 3: "highcontrast",
+                 4: "ocean", 5: "forest", 6: "sunset", 7: "purple"}
         return names.get(theme_id, "dark")
