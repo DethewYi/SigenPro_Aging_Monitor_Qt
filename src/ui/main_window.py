@@ -354,7 +354,7 @@ class MainWindow(QMainWindow):
                 "</ul>"
                 "<p><b>{tech}</b> Python / PyQt6</p>"
             ).format(
-                version="1.2.0",
+                version="1.2.1",
                 author="SigenPro",
                 desc=self.tr("Energy storage product aging test monitoring system"),
                 features=self.tr("Features"),
