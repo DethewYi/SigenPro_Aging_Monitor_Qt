@@ -42,43 +42,27 @@ class StatsBarWidget(QWidget):
 
         self._counts: dict[str, QLabel] = {}
         configs = [
-            ("Online", "#89b4fa"),
-            ("Offline", "#6c7086"),
-            ("Alarm", "#f38ba8"),
-            ("Testing", "#a6e3a1"),
+            ("Online", "stat-online"),
+            ("Offline", "stat-offline"),
+            ("Alarm", "stat-alarm"),
+            ("Testing", "stat-testing"),
         ]
-        for name, color in configs:
-            card = self._make_card(name, color)
+        for name, css_class in configs:
+            card = self._make_card(name, css_class)
             layout.addWidget(card)
             self._counts[name.lower()] = card
 
-    def _make_card(self, name: str, color: str) -> QLabel:
+    def _make_card(self, name: str, css_class: str) -> QLabel:
         """Build a single stat card with label + number."""
         label_text = self.tr(name)
         tooltip_key = self._TOOLTIP_KEYS.get(name, "")
         tooltip = self.tr(tooltip_key) if tooltip_key else ""
         card = QLabel(f"0")
         card.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card.setProperty("class", css_class)
         card.setProperty("label", name)
         card.setProperty("number", 0)
         card.setToolTip(tooltip)
-        card.setStyleSheet(
-            f"""
-            QLabel {{
-                background-color: #313244;
-                border-left: 4px solid {color};
-                border-radius: 6px;
-                padding: 8px 16px;
-            }}
-            QLabel[label] {{
-                font-size: 13px;
-                color: #a6adc8;
-            }}
-            QLabel[number] {{
-                font-size: 13px;
-            }}
-            """
-        )
         self._refresh_card_text(card, label_text, 0)
         return card
 
@@ -152,19 +136,17 @@ class DeviceCardWidget(QWidget):
 
         # Model / Serial Number
         self._info_label = QLabel("--")
-        self._info_label.setStyleSheet("color: #a6adc8; font-size: 11px;")
+        self._info_label.setProperty("class", "subtitle")
         layout.addWidget(self._info_label)
 
         # Live parameters (voltage, current, etc.)
         self._params_label = QLabel("--")
-        self._params_label.setStyleSheet("font-size: 11px;")
+        self._params_label.setProperty("class", "params")
         layout.addWidget(self._params_label)
 
         # Phase info (recipe execution progress)
         self._phase_label = QLabel("")
-        self._phase_label.setStyleSheet(
-            "color: #a6e3a1; font-size: 11px; font-weight: bold;"
-        )
+        self._phase_label.setProperty("class", "phase-info")
         layout.addWidget(self._phase_label)
 
         # Control buttons
@@ -236,18 +218,8 @@ class DeviceCardWidget(QWidget):
 
     def _apply_style(self):
         color = self.STATUS_COLORS.get(self._status, "#6c7086")
-        self.setStyleSheet(
-            f"""
-            DeviceCardWidget {{
-                background-color: #1e1e2e;
-                border: 1px solid #45475a;
-                border-radius: 8px;
-            }}
-            DeviceCardWidget:hover {{
-                background-color: #313244;
-            }}
-            """
-        )
+        self.setProperty("class", "device-card")
+        # Status badge color is kept inline because it changes dynamically
         self._status_label.setStyleSheet(
             f"background-color: {color}; color: #1e1e2e; "
             f"border-radius: 4px; padding: 2px 6px; "

@@ -810,3 +810,31 @@ QFrame[class="data-card"] {
 QFrame[class="data-card"]:hover {
     border-color: #b0b0b0;
 }
+
+/* ── Stats bar cards ──────────────────────────────────────── */
+*[class="stat-online"], *[class="stat-offline"],
+*[class="stat-alarm"], *[class="stat-testing"] {
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    padding: 8px 16px;
+    border: none;
+}
+*[class="stat-online"]  { border-left: 4px solid #4a90d9; color: #4a90d9; }
+*[class="stat-offline"] { border-left: 4px solid #999999; color: #999999; }
+*[class="stat-alarm"]   { border-left: 4px solid #e53935; color: #e53935; }
+*[class="stat-testing"] { border-left: 4px solid #43a047; color: #43a047; }
+
+/* ── Device cards ──────────────────────────────────────────── */
+DeviceCardWidget {
+    background-color: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+}
+DeviceCardWidget:hover {
+    background-color: #e0e0e0;
+}
+
+/* ── Device card labels ────────────────────────────────────── */
+QLabel[class="subtitle"] { color: #666666; font-size: 11px; }
+QLabel[class="params"]   { font-size: 11px; }
+QLabel[class="phase-info"] { color: #2e7d32; font-size: 11px; font-weight: bold; }
