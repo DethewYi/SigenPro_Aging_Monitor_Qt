@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QApplication,
     QCheckBox,
+    QScrollArea,
 )
 from PyQt6.QtCore import Qt
 
@@ -43,7 +44,7 @@ class SettingsPage(QWidget):
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(24, 24, 24, 24)
-        main_layout.setSpacing(16)
+        main_layout.setSpacing(0)
 
         title = QLabel(self.tr("Settings"))
         font = title.font()
@@ -51,6 +52,16 @@ class SettingsPage(QWidget):
         font.setBold(True)
         title.setFont(font)
         main_layout.addWidget(title)
+        main_layout.addSpacing(16)
+
+        # --- Scrollable content area ---
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+        scroll_layout.setSpacing(16)
 
         # --- Appearance group ---
         appearance_group = QGroupBox(self.tr("Appearance"))
@@ -68,7 +79,7 @@ class SettingsPage(QWidget):
         self._language_combo.currentIndexChanged.connect(self._on_language_changed)
         appearance_form.addRow(self.tr("Language:"), self._language_combo)
 
-        main_layout.addWidget(appearance_group)
+        scroll_layout.addWidget(appearance_group)
 
         # --- Database group ---
         db_group = QGroupBox(self.tr("Database"))
@@ -102,7 +113,7 @@ class SettingsPage(QWidget):
         self._test_db_btn.clicked.connect(self._on_test_db_connection)
         db_form.addRow("", self._test_db_btn)
 
-        main_layout.addWidget(db_group)
+        scroll_layout.addWidget(db_group)
 
         # --- Data Retention group ---
         retention_group = QGroupBox(self.tr("Data Retention"))
@@ -120,7 +131,7 @@ class SettingsPage(QWidget):
             self.tr("Keep data for:"), self._retention_days_spin
         )
 
-        main_layout.addWidget(retention_group)
+        scroll_layout.addWidget(retention_group)
 
         # --- Communication group ---
         comm_group = QGroupBox(self.tr("Communication"))
@@ -144,7 +155,11 @@ class SettingsPage(QWidget):
         )
         comm_form.addRow(self._sim_check)
 
-        main_layout.addWidget(comm_group)
+        scroll_layout.addWidget(comm_group)
+
+        scroll_layout.addStretch()
+        scroll.setWidget(scroll_content)
+        main_layout.addWidget(scroll)
 
         # --- Buttons ---
         button_layout = QHBoxLayout()
@@ -160,8 +175,6 @@ class SettingsPage(QWidget):
         button_layout.addWidget(self._save_btn)
         button_layout.addWidget(self._reset_btn)
         main_layout.addLayout(button_layout)
-
-        main_layout.addStretch()
 
     # ------------------------------------------------------------------
     # Load / Save
